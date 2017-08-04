@@ -1,9 +1,39 @@
 ﻿using System;
 using Common.Interfaces;
 using Common.Models;
+using System.Text.RegularExpressions;
+using System.Linq;
+
 
 namespace GoogleDistance.Models
 {
+    internal static class CityStateZipBuilderExtensions
+    {
+        public static string RemoveWhiteSpace(this string myString)
+        {
+            return Regex.Replace(myString, @"\s+", " ");
+        }
+        public static bool MatchZip(this string zip)
+        {
+            return !String.IsNullOrWhiteSpace(zip) && Regex.Match(@"^\d{5}$", zip).Success;
+        }
+
+        public static string FindAndRemoveZip(this string inputString, out string zip)
+        {
+            string pattern = @"\d{5}";
+            zip = Regex.Match(inputString, pattern).Value;
+            return Regex.Replace(inputString, pattern, "");
+        }
+        public static string RemoveUSA(this string fullLocationString)
+        {
+            if (fullLocationString.EndsWith(", USA", StringComparison.CurrentCultureIgnoreCase))
+                return fullLocationString.Substring(0, fullLocationString.Length - 5);
+            else if (fullLocationString.EndsWith(" USA", StringComparison.CurrentCultureIgnoreCase) || fullLocationString.EndsWith(",USA", StringComparison.CurrentCultureIgnoreCase))
+                return fullLocationString.Substring(0, fullLocationString.Length - 4);
+            else return fullLocationString;
+        }
+    }
+
 
     public class CityStateZipBuilder
     {
@@ -21,82 +51,100 @@ namespace GoogleDistance.Models
         //84111
         /// </summary>
         /// <param name="fullLocationString"></param>
-        public CityStateZipBuilder(string fullLocationString)
+        private CityStateZipBuilder(string fullLocationString, StateNameForm? stateNameFormOverride = null)
         {
+            fullLocationString = fullLocationString.RemoveWhiteSpace().Trim();
 
             if (String.IsNullOrWhiteSpace(fullLocationString))
                 return;
 
-            if (fullLocationString.EndsWith(", USA"))
-                fullLocationString = fullLocationString.Substring(0, fullLocationString.Length - 5);
-            else if (fullLocationString.EndsWith(" USA"))
-                fullLocationString = fullLocationString.Substring(0, fullLocationString.Length - 4);
+            string city = "", state = "", zip = "";
+
+            //since we're removing all zipcodes upfront, we probably don't need to look for them later on in the method, but...
+            //we there are expensive unit tests covering this class that demonstrate it works, so leave it for now
+            string masterZip;
+            fullLocationString = fullLocationString.FindAndRemoveZip(out masterZip).RemoveWhiteSpace().Trim();
+            fullLocationString = fullLocationString.RemoveUSA();
 
 
-
-            string[] parts = fullLocationString.Split(',');
-            string city = null, state = null, zip = null;
-
-            //Salt Lake City 84111
-            //84111
-            if (parts.Length == 1)
+            if (!String.IsNullOrWhiteSpace(fullLocationString))
             {
-                string[] cityZip = parts[0].Trim().Split(' ');
-                if (cityZip.Length >= 1)
-                {
-                    zip = cityZip[0].Trim();
-                }
-                if (cityZip.Length > 1)
-                {
-                    city = cityZip[0].Trim();
-                }
-            }
-            //Salt Lake City, UT 84111
-            //Salt Lake City, UT
-            else if (parts.Length == 2)
-            {
-                city = parts[0].Trim();
-                string[] stateZip = parts[1].Trim().Split(' ');
 
-                if (stateZip.Length >= 1)
+                string[] parts = fullLocationString.Split(',').Select(s => s.Trim()).ToArray();
+
+                //Salt Lake City 84111
+                //84111
+                if (parts.Length == 1)
                 {
-                    state = stateZip[0].Trim();
+                    city = parts[0];
+                    //string[] cityZip = parts[0].Split(' ');
+
+                    //if (cityZip.Length >= 1)
+                    //{
+                    //    city = cityZip[0];
+                    //}
+                    //if (cityZip.Length > 1)
+                    //{
+                    //    zip = cityZip[1];
+                    //}
                 }
-                if (stateZip.Length > 1)
+                //Salt Lake City, UT 84111
+                //Salt Lake City, UT
+                else if (parts.Length == 2)
                 {
-                    zip = stateZip[1].Trim();
+                    city = parts[0];
+
+                    if (StateBuilder.IsState(parts[1]))
+                    {
+                        state = parts[1];
+                    }
+                    else
+                    {
+                        string[] stateZip = parts[1].Split(' ');
+
+                        if (stateZip.Length >= 1)
+                        {
+                            state = stateZip[0];
+                        }
+                        if (stateZip.Length > 1)
+                        {
+                            zip = stateZip[1];
+                        }
+                    }
                 }
-            }
-            else if (parts.Length >= 3)
-            {
-                city = parts[0].Trim();
-                state = parts[1].Trim();
-                zip = parts[2].Trim();
+                else if (parts.Length >= 3)
+                {
+                    city = parts[0];
+                    state = parts[1];
+                    zip = parts[2];
+                }
             }
 
             this.City = city;
             this.State = state;
-            this.StateAsString = this.State.ToString();
-            this.Zip = zip;
+            this.StateAsString = this.State == null ? "" : stateNameFormOverride.HasValue ? State.ToString(stateNameFormOverride.Value) : State.ToString();
+            this.Zip = String.IsNullOrWhiteSpace(masterZip) ? zip : zip.MatchZip() ? zip : masterZip;
         }
 
-        public CityStateZipBuilder(string city = null, string state = null, string zip = null)
+
+
+        private CityStateZipBuilder(string city = null, string state = null, string zip = null, StateNameForm? stateNameFormOverride = null)
         {
-            this.City = city;
-            this.State = state;
-            this.StateAsString = this.State.ToString();
-            this.Zip = zip;
+            this.City = city?.RemoveWhiteSpace().Trim();
+            this.State = state?.RemoveWhiteSpace().Trim();
+            this.StateAsString = this.State == null ? "" : stateNameFormOverride.HasValue ? State.ToString() : State.ToString(stateNameFormOverride.Value);
+            this.Zip = zip?.RemoveWhiteSpace().Trim();
         }
 
-        public static ICityStateZipWithString Build(string fullLocationString)
+        public static ICityStateZipWithString Build(string fullLocationString, StateNameForm? stateNameFormOverride = null)
         {
-            var builder = new CityStateZipBuilder(fullLocationString);
+            var builder = new CityStateZipBuilder(fullLocationString, stateNameFormOverride);
             return CityStateZipBuilder.Build(builder);
         }
 
-        public static ICityStateZipWithString Build(string city = null, string state = null, string zip = null)
+        public static ICityStateZipWithString Build(string city = null, string state = null, string zip = null, StateNameForm? stateNameFormOverride = null)
         {
-            var builder = new CityStateZipBuilder(city, state, zip);
+            var builder = new CityStateZipBuilder(city, state, zip, stateNameFormOverride);
             return CityStateZipBuilder.Build(builder);
         }
 
@@ -118,7 +166,7 @@ namespace GoogleDistance.Models
         //84111
         //Salt Lake City
         //Ut
-        public string ToString(StateNameForm stateNameFormOverride)
+        public override string ToString()
         {
             bool cityBlank = String.IsNullOrWhiteSpace(City);
             bool stateBlank = String.IsNullOrWhiteSpace(StateAsString);
@@ -131,14 +179,13 @@ namespace GoogleDistance.Models
 
             //Salt Lake City 84111
             if (stateBlank && !zipBlank && !cityBlank)
-                city = city.Remove(city.Length - 2);
+                city = city.Replace(",", "");
 
             return (city + state + zip).Trim();
         }
-        public override string ToString()
-        {
-            return ToString(StateNameForm.NoPreference);
-        }
+
+
+
     }
 }
 

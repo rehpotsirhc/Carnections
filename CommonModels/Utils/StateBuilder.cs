@@ -174,7 +174,6 @@ namespace GoogleDistance.Models
 
     }
 
-
     public class StateBuilder
     {
         private string _abbreviation;
@@ -250,7 +249,11 @@ namespace GoogleDistance.Models
             return stateform == StateNameForm.Full ? FullName : Abbreviation;
         }
 
-
+        public static bool IsState(string state)
+        {
+            var stateBuilder = new StateBuilder(state);
+            return stateBuilder.StateEnum != StateEnumeration.UNKNOWN;
+        }
 
         //public static implicit operator string(State stateEnum)
         //{

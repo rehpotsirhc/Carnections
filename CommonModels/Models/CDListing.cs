@@ -1,11 +1,16 @@
 ﻿using CentralDispatchData.interfaces;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using Common.Models;
+using Newtonsoft.Json;
 
 namespace CentralDispatchData.Models
 {
+    public class CDListings
+    {
+        public int Count { get; set; }
+        public int PageStart { get; set; }
+        public IList<CDListing> Listings { get; set; }
+    }
     public class CDListing : ICDListing
     {
         //pk 
@@ -17,8 +22,10 @@ namespace CentralDispatchData.Models
         public double PricePerMile { get; set; }
         public bool VehicleOperable { get; set; }
         public TrailerType ShipMethod { get; set; }
+        [JsonProperty("vehicle_types")]
         public string VehicleTypes { get; set; }
         public string TruckMiles { get; set; }
+        [JsonProperty("locations_valid")]
         public bool LocationsValid { get; set; }
     }
 }
