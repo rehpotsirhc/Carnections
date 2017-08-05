@@ -181,9 +181,9 @@ namespace GoogleDistance.Models
         private const StateNameForm STATE_NAME_FORM_DEFAULT = StateNameForm.Abbreviation;
         private StateNameForm StateNameFormFromInput = StateNameForm.NoPreference;
 
-        private StateBuilder(string stateString)
+        public StateBuilder(string stateString)
         {
-            stateString = stateString.Trim();
+            stateString = stateString.RemoveWhiteSpace().Trim();
             StateEnumeration tmp;
 
             //try to convert based on StateEnumeration value (which are the abbreviations)
@@ -233,6 +233,25 @@ namespace GoogleDistance.Models
             //If it is no-preference use the one determined by the initial input, unless that is also no-preference (for some reason), in which case use the default
             return SetStateForm(stateNameFormOverride == StateNameForm.NoPreference ?
               DetermineStateFormFromInput() : stateNameFormOverride);
+        }
+
+        public override bool Equals(object obj)
+        {
+            StateBuilder that;
+            if (obj is string)
+                that = (string)obj;
+            else
+                that = (StateBuilder)obj;
+            return that.StateEnum == this.StateEnum;
+        }
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + StateEnum.GetHashCode();
+                return hash;
+            }
         }
 
         public override string ToString()
