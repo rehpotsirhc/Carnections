@@ -3,19 +3,29 @@ using Common.Interfaces;
 using Common.Models;
 using System.Text.RegularExpressions;
 using System.Linq;
-
+using System.Collections.Generic;
 
 namespace GoogleDistance.Models
 {
     public static class CityStateZipExtensions
     {
-        public static string RemoveWhiteSpace(this string myString)
+        public static bool CaseInsensitiveContains(this string text, string value,
+        StringComparison stringComparison = StringComparison.CurrentCultureIgnoreCase)
         {
-            return Regex.Replace(myString, @"\s+", " ");
+            return text.IndexOf(value, stringComparison) >= 0;
+        }
+        public static string RemoveWhiteSpace(this string inputString)
+        {
+            return Regex.Replace(inputString, @"\s+", " ");
         }
         public static bool MatchZip(this string zip)
         {
             return !String.IsNullOrWhiteSpace(zip) && Regex.Match(@"^\d{5}$", zip).Success;
+        }
+        public static string RemoveAllButFirst(this string inputString, char c)
+        {
+            int pos = 1 + inputString.IndexOf(c);
+            return inputString.Substring(0, pos) + inputString.Substring(pos).Replace(",", string.Empty);
         }
 
         public static string FindAndRemoveZip(this string inputString, out string zip)
@@ -24,13 +34,41 @@ namespace GoogleDistance.Models
             zip = Regex.Match(inputString, pattern).Value;
             return Regex.Replace(inputString, pattern, "");
         }
+        public static string RemovefromEnd(this string inputString, char c)
+        {
+            if (string.IsNullOrWhiteSpace(inputString))
+                return inputString;
+            string temp = inputString.TrimEnd();
+            int iLastChar = temp.Length - 1;
+            if (iLastChar >= 0 && temp[iLastChar] == c)
+            {
+                return inputString.Remove(iLastChar, 1);
+            }
+            return inputString;
+
+        }
+        public static IEnumerable<int> AllIndexesOf(this string str, string searchstring)
+        {
+            int minIndex = str.IndexOf(searchstring);
+            while (minIndex != -1)
+            {
+                yield return minIndex;
+                minIndex = str.IndexOf(searchstring, minIndex + searchstring.Length);
+            }
+        }
+
         public static string RemoveUSA(this string fullLocationString)
         {
-            if (fullLocationString.EndsWith(", USA", StringComparison.CurrentCultureIgnoreCase))
+            if (fullLocationString.CaseInsensitiveContains(", USA", StringComparison.CurrentCultureIgnoreCase))
                 return fullLocationString.Substring(0, fullLocationString.Length - 5);
-            else if (fullLocationString.EndsWith(" USA", StringComparison.CurrentCultureIgnoreCase) || fullLocationString.EndsWith(",USA", StringComparison.CurrentCultureIgnoreCase))
+            else if (fullLocationString.CaseInsensitiveContains(" USA", StringComparison.CurrentCultureIgnoreCase) || fullLocationString.CaseInsensitiveContains(",USA", StringComparison.CurrentCultureIgnoreCase))
                 return fullLocationString.Substring(0, fullLocationString.Length - 4);
             else return fullLocationString;
+        }
+        public static string RemoveSpecialCharacters(this string inputString)
+        {
+            string pattern = @"[^a-zA-Z\s,]";
+            return Regex.Replace(inputString, pattern, "");
         }
     }
 
@@ -57,55 +95,59 @@ namespace GoogleDistance.Models
             if (String.IsNullOrWhiteSpace(fullLocationString = fullLocationString.RemoveWhiteSpace().Trim()))
                 return;
 
-  
+
             //since we're removing all zipcodes upfront, we probably don't need to look for them later on in the method, but...
             //we there are expensive unit tests covering this class that demonstrate it works, so leave it for now
-            fullLocationString = fullLocationString.FindAndRemoveZip(out string masterZip).RemoveWhiteSpace().Trim().RemoveUSA();
+            fullLocationString = fullLocationString.FindAndRemoveZip(out string masterZip).RemoveUSA().RemoveAllButFirst(',').RemoveSpecialCharacters().RemovefromEnd(',').RemoveWhiteSpace().Trim();
+
 
             if (!String.IsNullOrWhiteSpace(fullLocationString))
             {
+                //will contain 0 or 1 commas, not more
                 string[] parts = fullLocationString.Split(',').Select(s => s.Trim()).ToArray();
 
-                //Salt Lake City 84111
-                //84111
+
                 if (parts.Length == 1)
                 {
-                    city = parts[0];
-                    //string[] cityZip = parts[0].Split(' ');
-
-                    //if (cityZip.Length >= 1)
-                    //{
-                    //    city = cityZip[0];
-                    //}
-                    //if (cityZip.Length > 1)
-                    //{
-                    //    zip = cityZip[1];
-                    //}
-                }
-                //Salt Lake City, UT 84111
-                //Salt Lake City, UT
-                else if (parts.Length == 2)
-                {
-                    city = parts[0];
-
-                    if (StateBuilder.IsState(parts[1]))
-                        state = parts[1];
-                    else
+                    bool found = false;
+                    foreach (int i in parts[0].AllIndexesOf(" "))
                     {
-                        string[] stateZip = parts[1].Split(' ');
 
-                        if (stateZip.Length >= 1)
-                            state = stateZip[0];
+                        if (i != -1)
+                        {
+                            string potentialCity = parts[0].Substring(0, i);
+                            string potentialState = parts[0].Substring(i + 1);
 
-                        if (stateZip.Length > 1)
-                            zip = stateZip[1];
+                            if (StateBuilder.IsState(potentialState))
+                            {
+                                state = potentialState;
+                                city = potentialCity;
+                                found = true;
+                                break;
+                            }
+                            else if (StateBuilder.IsState(potentialCity))
+                            {
+                                state = potentialCity;
+                                city = potentialState;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                    }
+                    if (!found)
+                    {
+                        if (StateBuilder.IsState(parts[0]))
+                            state = parts[0];
+                        else
+                            city = parts[0];
                     }
                 }
-                else if (parts.Length >= 3)
+
+                else
                 {
                     city = parts[0];
                     state = parts[1];
-                    zip = parts[2];
                 }
             }
 
