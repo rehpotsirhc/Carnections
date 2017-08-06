@@ -14,6 +14,10 @@ namespace Common.Models
         {
             return CityStateZipBuilder.Equals(this, (CityStateZip)obj);
         }
+        public int DegreeOfEquals(ICityStateZip that)
+        {
+            return CityStateZipBuilder.DegreeOfEquals(this, that);
+        }
 
         public override int GetHashCode()
         {

@@ -9,6 +9,11 @@ namespace GoogleDistance.Models
 {
     public static class CityStateZipExtensions
     {
+        public static bool EqualsClean(this string inputString1, string inputString2)
+        {
+            return inputString1.RemoveWhiteSpace().Trim().Equals(inputString2.RemoveWhiteSpace().Trim(), StringComparison.CurrentCultureIgnoreCase);
+        }
+
         public static bool CaseInsensitiveContains(this string text, string value,
         StringComparison stringComparison = StringComparison.CurrentCultureIgnoreCase)
         {
@@ -73,8 +78,13 @@ namespace GoogleDistance.Models
     }
 
 
-    public class CityStateZipBuilder
+    public class CityStateZipBuilder 
     {
+        public static readonly int ZIP_DEGREE = 3;
+        public static readonly int CITY_DEGREE = 2;
+        public static readonly int STATE_DEGREE = 1;
+
+
         public string City { get; }
         public StateBuilder State { get; }
         public string Zip { get; }
@@ -193,9 +203,32 @@ namespace GoogleDistance.Models
 
         public static bool Equals(ICityStateZip cityStateZip1, ICityStateZip cityStateZip2)
         {
-            return cityStateZip1.City.RemoveWhiteSpace().Trim().Equals(cityStateZip2.City.RemoveWhiteSpace().Trim(), StringComparison.CurrentCultureIgnoreCase) &&
-                (new StateBuilder(cityStateZip2.State).Equals(new StateBuilder(cityStateZip2.State)) &&
-                cityStateZip1.Zip.RemoveWhiteSpace().Trim().Equals(cityStateZip2.Zip.RemoveWhiteSpace().Trim(), StringComparison.CurrentCultureIgnoreCase));
+            return CityEqualsDegree(cityStateZip1, cityStateZip2) > 0 && StateEqualsDegree(cityStateZip1, cityStateZip2) > 0 && ZipEqualsDegree(cityStateZip1, cityStateZip2) > 0;
+        }
+        private static int CityEqualsDegree(ICityStateZip cityStateZip1, ICityStateZip cityStateZip2)
+        {
+            if (!String.IsNullOrWhiteSpace(cityStateZip1.City) && cityStateZip1.City.EqualsClean(cityStateZip2.City))
+                return CITY_DEGREE;
+            else return 0;
+        }
+        private static int StateEqualsDegree(ICityStateZip cityStateZip1, ICityStateZip cityStateZip2)
+        {
+            if (!String.IsNullOrWhiteSpace(cityStateZip1.State) && (new StateBuilder(cityStateZip2.State).Equals(new StateBuilder(cityStateZip2.State))))
+                return STATE_DEGREE;
+            else return 0;
+
+        }
+        private static int ZipEqualsDegree(ICityStateZip cityStateZip1, ICityStateZip cityStateZip2)
+        {
+            if (!String.IsNullOrWhiteSpace(cityStateZip1.Zip) && cityStateZip1.Zip.EqualsClean(cityStateZip2.Zip))
+                return ZIP_DEGREE;
+            else return 0;
+        }
+
+
+        public static int DegreeOfEquals(ICityStateZip cityStateZip1, ICityStateZip cityStateZip2)
+        {
+            return CityEqualsDegree(cityStateZip1, cityStateZip2) + StateEqualsDegree(cityStateZip1, cityStateZip2) + ZipEqualsDegree(cityStateZip1, cityStateZip2);
         }
 
         public static int GetHashCode(ICityStateZip cityStateZip)
@@ -214,6 +247,11 @@ namespace GoogleDistance.Models
         {
             var that = (CityStateZipBuilder)obj;
             return CityStateZipBuilder.Equals(CityStateZipBuilder.Build(this), CityStateZipBuilder.Build(that));
+        }
+
+        public int DegreeOfEquals(CityStateZipBuilder that)
+        {
+            return CityStateZipBuilder.DegreeOfEquals(CityStateZipBuilder.Build(this), CityStateZipBuilder.Build(that));
         }
 
         public override int GetHashCode()

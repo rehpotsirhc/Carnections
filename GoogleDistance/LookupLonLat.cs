@@ -1,6 +1,9 @@
 ﻿using Common.Interfaces;
 using Common.Models;
 using GoogleDistance.Models;
+using ScrapeCentralDispatch.Models;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,70 +16,84 @@ namespace GoogleDistance
 
     public class LookupLonLat
     {
-
+        private static readonly int DEGREE_OF_EQUALS_MIN = 1;
+        private static readonly int DEGREE_OF_EQUALS_STOP_SEARCH = 3;
         public LookupLonLat()
         {
 
         }
 
-        public static async Task<ILonLat> Lookup(string city, string state, string zip, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string city, string state, string zip, StateNameForm stateNameForm)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(city, state, zip, stateNameForm);
-            var googleLonLat = await FindMatchTiered(standardizedLocation, stateNameForm);
+            return await FindMatchTiered(standardizedLocation, stateNameForm);
 
-            return ConvertToLonLat(googleLonLat);
         }
-        public static async Task<ILonLat> Lookup(ICityStateZip location, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(ICityStateZip location, StateNameForm stateNameForm)
         {
             return await Lookup(location.City, location.State, location.Zip, stateNameForm);
         }
 
-        public static async Task<ILonLat> Lookup(string location, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string location, StateNameForm stateNameForm)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(location, stateNameForm);
-            var googleLonLat = await FindMatchTiered(standardizedLocation, stateNameForm);
-            return ConvertToLonLat(googleLonLat);
+            return await FindMatchTiered(standardizedLocation, stateNameForm);
         }
 
-        //is this the best place for it?
-        private static ILonLat ConvertToLonLat(GoogleLonLat googleLonLat)
+        private static async Task<ILocation> FindMatchTiered(ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm)
         {
-            return new LonLat()
-            {
-                Longitude = googleLonLat.Longitude,
-                Latitude = googleLonLat.Latitude
-            };
-        }
+            var googleLatLons = new List<Tuple<int, ILocation>>();
+            Tuple<int, ILocation> best = null;
+            bool continueSearch = FindMatch(await GetGeocodeByFullLocation(standardizedLocation), standardizedLocation, stateNameForm, googleLatLons, ref best);
 
-        private static async Task<GoogleLonLat> FindMatchTiered(ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm)
-        {
-            GoogleLonLat googleLatLon;
-            googleLatLon = FindMatch(await GetGeocodeByFullLocation(standardizedLocation), standardizedLocation, stateNameForm);
-
-            if (googleLatLon == null)
+            if (continueSearch && !String.IsNullOrWhiteSpace(standardizedLocation.City) && !String.IsNullOrWhiteSpace(standardizedLocation.State))
             {
-                googleLatLon = FindMatch(await GetGeocodeByCityState(standardizedLocation.City, standardizedLocation.State, stateNameForm), standardizedLocation, stateNameForm);
+                continueSearch = FindMatch(await GetGeocodeByCityState(standardizedLocation.City, standardizedLocation.State, stateNameForm), standardizedLocation, stateNameForm, googleLatLons, ref best);
             }
-            if (googleLatLon == null)
+            if (continueSearch && !String.IsNullOrWhiteSpace(standardizedLocation.Zip))
             {
-                googleLatLon = FindMatch(await GetGeocodeByZip(standardizedLocation.Zip), standardizedLocation, stateNameForm);
+                continueSearch = FindMatch(await GetGeocodeByZip(standardizedLocation.Zip), standardizedLocation, stateNameForm, googleLatLons, ref best);
             }
 
-            return googleLatLon;
+            return best?.Item2;
         }
-        private static GoogleLonLat FindMatch(GoogleGeocode geocode, ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm)
+        private static bool FindMatch(GoogleGeocode geocode, ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm, List<Tuple<int, ILocation>> googleLatLons, ref Tuple<int, ILocation> best)
         {
+            if (googleLatLons == null)
+                googleLatLons = new List<Tuple<int, ILocation>>();
+
             if (geocode != null || geocode.Success)
             {
                 foreach (Result r in geocode.Results)
                 {
                     var geocodeLocation = CityStateZipBuilder.Build(r.FormattedAddress, stateNameForm);
+                    int degreeOfEquals = standardizedLocation.DegreeOfEquals(geocodeLocation);
 
-                    if (standardizedLocation.Equals(geocodeLocation))
-                        return r.Geometry.Location;
+                    if (degreeOfEquals >= DEGREE_OF_EQUALS_MIN)
+                    {
+                        var latLon = r.Geometry.Location;
+
+                        ILocation location = new Location()
+                        {
+                            City = geocodeLocation.City,
+                            State = geocodeLocation.State,
+                            Zip = geocodeLocation.Zip,
+                            Latitude = latLon.Latitude,
+                            Longitude = latLon.Longitude
+                        };
+
+                        var latLonTuple = new Tuple<int, ILocation>(degreeOfEquals, location);
+                        if (best == null || googleLatLons.Where(t => t.Item1 > degreeOfEquals).Count() == 0)
+                            best = latLonTuple;
+
+                        googleLatLons.Add(latLonTuple);
+
+                        if (degreeOfEquals >= DEGREE_OF_EQUALS_STOP_SEARCH)
+                            return false;
+                    }
                 }
             }
-            return null;
+            return true;
         }
 
         private static async Task<GoogleGeocode> GetGeocodeByFullLocation(ICityStateZipWithString standardizedLocation)
@@ -96,9 +113,9 @@ namespace GoogleDistance
             return await CallGoogleGeocode.BuildEndpoint(standardizedLocation.FullAddress)?.GetGeoCode();
         }
 
-      
 
-        
+
+
 
 
 

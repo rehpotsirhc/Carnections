@@ -38,8 +38,10 @@ namespace GoogleDistance.Models
     internal class GoogleLonLat
     {
         [JsonProperty("lng")]
-        public string Longitude { get; set; }
-        public string Latitude { get; set; }
+        public double Longitude { get; set; }
+
+        [JsonProperty("lat")]
+        public double Latitude { get; set; }
     }
 
     internal class Geometry

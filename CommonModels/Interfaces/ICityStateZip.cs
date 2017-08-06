@@ -6,5 +6,7 @@ namespace Common.Interfaces
         string City { get; }
         string State { get; }
         string Zip { get; }
+
+        int DegreeOfEquals(ICityStateZip that);
     }
 }

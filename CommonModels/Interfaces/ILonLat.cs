@@ -6,7 +6,7 @@ namespace Common.Interfaces
 {
     public interface ILonLat
     {
-        string Longitude { get; }
-        string Latitude { get; }
+        double Longitude { get; }
+        double Latitude { get; }
     }
 }
