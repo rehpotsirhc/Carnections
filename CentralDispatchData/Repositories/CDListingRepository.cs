@@ -19,7 +19,7 @@ namespace CentralDispatchData.Repositories
             if (_dbContext == null || recreateContext)
                 _dbContext = new CDListingDbContext();
 
-            var dbSet = _dbContext.Set<ICDListingMinimal> ();
+            var dbSet = _dbContext.Set<ICDListingMinimal>();
             IQueryable<ICDListingMinimal> listings = dbSet.Where(listing => listing.ModifiedDate < DateTime.Now.AddDays(-daysOld));
 
             BulkDatbaseOperation(listings, commitCount, recreateContext, DeleteToContext);
@@ -29,6 +29,13 @@ namespace CentralDispatchData.Repositories
         {
             //listings must be the full ICDListing and not ICDListingMinimal
             BulkDatbaseOperation(listings, commitCount, recreateContext, AddorUpdateToContext);
+        }
+        public IEnumerable<ICDListing> GetAll()
+        {
+            if (_dbContext == null)
+                _dbContext = new CDListingDbContext();
+
+           return _dbContext.Set<ICDListing>();
         }
 
         private void BulkDatbaseOperation(IEnumerable<ICDListingMinimal> listings, int commitCount, bool recreateContext,
@@ -42,7 +49,7 @@ namespace CentralDispatchData.Repositories
                 int count = 0;
                 foreach (var listing in listings)
                 {
-       
+
                     _dbContext = dataBaseOperation(listing, _dbContext);
                     _dbContext = SaveAndFlush(_dbContext, ++count, commitCount, recreateContext);
                 }
@@ -77,7 +84,6 @@ namespace CentralDispatchData.Repositories
             dbSet.Remove(listing);
             return context;
         }
-
 
         private static CDListingDbContext SaveAndFlush(CDListingDbContext context, int count, int commitCount, bool recreateContext)
         {

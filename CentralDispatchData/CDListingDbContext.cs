@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 namespace CentralDispatchData
 {
-    public class CDListingDbContext : DbContext
+    public class CDListingDbContext :  DbContext, ICDListingDbContext
     {
         public CDListingDbContext()
         {

@@ -227,6 +227,7 @@ namespace GoogleDistance.Models
             else return null;
         }
 
+     
         public string ToString(StateNameForm stateNameFormOverride)
         {
             //If the override is not no-preference, use it. 
@@ -272,6 +273,21 @@ namespace GoogleDistance.Models
         {
             var stateBuilder = new StateBuilder(state);
             return stateBuilder.StateEnum != StateEnumeration.UNKNOWN;
+        }
+
+        public static StateBuilder GetState(string stateString)
+        {
+            StateBuilder stateBuilder = stateString;
+            return stateBuilder;
+        }
+        public static string GetAbbreviation(string stateString)
+        {
+            return GetState(stateString).Abbreviation;
+        }
+
+        public static string GetFullName(string stateString)
+        {
+            return GetState(stateString).FullName;
         }
 
         //public static implicit operator string(State stateEnum)

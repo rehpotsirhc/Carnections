@@ -1,10 +1,9 @@
 ﻿using Common.Interfaces;
 using Common.Models;
+using Common.Utils;
 using GoogleDistance.Models;
 using Newtonsoft.Json;
-using ScrapeCDTest;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
