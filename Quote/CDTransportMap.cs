@@ -1,13 +1,17 @@
 ﻿using CentralDispatchData.interfaces;
+using CentralDispatchData.Repositories;
 using Common.Interfaces;
-using Quote;
 using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
+using System.Threading.Tasks;
+using System;
 
 namespace Quote
 {
     public class CDTransportMap
     {
-
+        private const string CACHE_KEY = "CDTransportMap_KEY";
+        private const int EXPIRATION_IN_DAYS = 3; //this is also how often we should scrape central dispatch
 
         //long range: -66.84(E) ==> -124.45(W)   *57.61
         //lat range:  25.13(S) ==> 49.35 (N)    *24.22
@@ -48,6 +52,18 @@ namespace Quote
                     yield return pickupListing;
             }
         }
+
+
+        public static async Task<CDTransportMap> GetMap(IMemoryCache cache, ICDListingRepository repository)
+        {
+            return await cache.GetOrCreateAsync<CDTransportMap>(CACHE_KEY, entry =>
+            {
+                entry.SlidingExpiration = TimeSpan.FromDays(EXPIRATION_IN_DAYS);
+                return Task.FromResult(new CDTransportMap(repository.GetAll()));
+            });
+        }
+
+
 
     }
 }

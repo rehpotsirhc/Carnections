@@ -11,7 +11,8 @@ namespace Quote
 {
     public static class QuoteCalculator
     {
-        public static async Task<Price> Calculate(this Task<ICDListings> listings, TrailerType myTrailerType, bool myIsOperable, VehicleType myVehicleType)
+    
+        public static Price CalculatePrice(this IEnumerable<ICDListing> listings, TrailerType myTrailerType, bool myIsOperable, VehicleType myVehicleType)
         {
             if (listings == null)
                 return new Price(0, 0);
@@ -22,7 +23,7 @@ namespace Quote
             var vehicleTypeSize = new VehicleTypeSize(myVehicleType);
             var traielrTypeWeight = new TrailerTypeWeight(myTrailerType);
 
-            foreach (ICDListing l in (await listings).Listings)
+            foreach (ICDListing l in listings)
             {
                 TransformedListing transformedListing = new TransformedListing(l);
 
