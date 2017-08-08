@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace ScrapeCentralDispatch
 {
+    //Perhaps this method should not be static and instead be an instance class with a backing interface
     public static class ScrapeCD
     {
         private const double MIN_PER_MILE = .1;
@@ -25,10 +26,12 @@ namespace ScrapeCentralDispatch
         // code from
         // https://blogs.msdn.microsoft.com/pfxteam/2012/08/02/processing-tasks-as-they-complete/
         public static void ScrapeAllAndSave(ICDListingRepository repository,
+            Action<ICDListingRepository, Func<IList<Task<ICDListings>>>, Action<ICDListingRepository, ICDListings>, Action<Exception>> runTasksConcurrently = null,
             Func<IList<Task<ICDListings>>> scrape = null,
             Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
         {
-
+            //need to try/test Method1 and Method2
+            runTasksConcurrently = runTasksConcurrently ?? RunTasksConcurrently_Method2;
             scrape = scrape ?? ScrapeAll;
             onBatchScrapeCompleted = onBatchScrapeCompleted ?? OnBatchScrapeCompleted;
             onBatchScrapeError = onBatchScrapeError ?? OnBatchScrapeError;
@@ -45,6 +48,39 @@ namespace ScrapeCentralDispatch
                      }
                  }, TaskScheduler.Default);
             }
+
+
+        }
+
+        private static void RunTasksConcurrently_Method1(ICDListingRepository repository, Func<IList<Task<ICDListings>>> scrape,
+            Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        {
+            foreach (Task<ICDListings> listingBatchTask in scrape())
+            {
+                listingBatchTask.ContinueWith(completed =>
+                {
+                    switch (completed.Status)
+                    {
+                        case TaskStatus.RanToCompletion: onBatchScrapeCompleted(repository, completed.Result); break;
+                        case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
+
+                    }
+                }, TaskScheduler.Default);
+            }
+        }
+
+        private static async void RunTasksConcurrently_Method2(ICDListingRepository repository, Func<IList<Task<ICDListings>>> scrape,
+        Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        {
+            IList<Task<ICDListings>> tasks = scrape();
+            while (tasks.Count > 0)
+            {
+                var t = await Task.WhenAny(tasks);
+                tasks.Remove(t);
+                try { onBatchScrapeCompleted(repository, await t); }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { onBatchScrapeError(e); }
+            }
         }
 
         private static void OnBatchScrapeCompleted(ICDListingRepository repository, ICDListings listingsBatch)
@@ -59,13 +95,16 @@ namespace ScrapeCentralDispatch
 
         private static IList<Task<ICDListings>> ScrapeAll()
         {
-            var firstBatch = ScrapeCD.BuildEndpointAll(MIN_PER_MILE, 0, SCRAPE_BATCH_SIZE).GetListings().Result;
+            int i = 0;
+            var firstBatch = ScrapeCD.BuildEndpointAll(MIN_PER_MILE, i, SCRAPE_BATCH_SIZE).GetListings().Result;
             int absoluteTotal = firstBatch.Count;
 
-            IList<Task<ICDListings>> scrapeBatches = new List<Task<ICDListings>>();
-            for (int t = 0; t < absoluteTotal; t += ScrapeCD.SCRAPE_BATCH_SIZE)
+            IList<Task<ICDListings>> scrapeBatches = new List<Task<ICDListings>>() { Task.FromResult(firstBatch) };
+
+
+            for (i = 1; i < absoluteTotal; i += ScrapeCD.SCRAPE_BATCH_SIZE)
             {
-                scrapeBatches.Add(ScrapeCD.BuildEndpointAll(MIN_PER_MILE, t, SCRAPE_BATCH_SIZE).GetListings());
+                scrapeBatches.Add(ScrapeCD.BuildEndpointAll(MIN_PER_MILE, i, SCRAPE_BATCH_SIZE).GetListings());
             }
 
 
