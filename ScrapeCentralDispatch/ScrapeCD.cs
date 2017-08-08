@@ -80,7 +80,7 @@ namespace ScrapeCentralDispatch
             try
             {
                 // return JsonConvert.DeserializeObject<CentralDispatchListings>(response, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
-                return JsonConvert.DeserializeObject<CDListings>(response);
+                return JsonConvert.DeserializeObject<ICDListings>(response);
             }
             catch (Exception)
             {

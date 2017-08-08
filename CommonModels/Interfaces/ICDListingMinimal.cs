@@ -9,5 +9,6 @@ namespace CentralDispatchData.Models
         //primary key of CDListing
         int ListingId { get; set; }
         DateTime ModifiedDate { get; set; }
+
     }
 }

@@ -7,7 +7,7 @@ using Common.Interfaces;
 
 namespace CentralDispatchData.Models
 {
-    public class CDListings :ICDListings
+    public class CDListings : ICDListings
     {
         public int Count { get; set; }
         public int PageStart { get; set; }
@@ -15,10 +15,10 @@ namespace CentralDispatchData.Models
     }
     public class CDListing : CDListingMinimal, ICDListing, ICDListingMinimal
     {
-       
 
-        public LonLat Pickup { get; set; }
-        public LonLat Delivery { get; set; }
+        public int Id { get { return ListingId; } }
+        public ILonLat Pickup { get; set; }
+        public ILonLat Delivery { get; set; }
         public double Price { get; set; }
         public double PricePerMile { get; set; }
         public bool VehicleOperable { get; set; }
