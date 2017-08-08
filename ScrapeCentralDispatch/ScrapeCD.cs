@@ -7,6 +7,7 @@ using GoogleDistance.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,30 +16,63 @@ namespace ScrapeCentralDispatch
 {
     public static class ScrapeCD
     {
+        private const double MIN_PER_MILE = .1;
+        private const int SCRAPE_BATCH_SIZE = 500;
+        private const int DATABASE_BATCH_SIZE = 100;
+        private const int INITIAL_TOTAL = SCRAPE_BATCH_SIZE + 1;
 
-        private static int perPage = 500;
-        private static int Total = perPage;
 
-        public static void ScrapeAllAndSave(CDListingRepository repository)
+        // code from
+        // https://blogs.msdn.microsoft.com/pfxteam/2012/08/02/processing-tasks-as-they-complete/
+        public static void ScrapeAllAndSave(ICDListingRepository repository,
+            Func<IList<Task<ICDListings>>> scrape = null,
+            Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
         {
-            foreach(Task<ICDListings> listingBatchTask in ScrapeAll())
+
+            scrape = scrape ?? ScrapeAll;
+            onBatchScrapeCompleted = onBatchScrapeCompleted ?? OnBatchScrapeCompleted;
+            onBatchScrapeError = onBatchScrapeError ?? OnBatchScrapeError;
+
+            foreach (Task<ICDListings> listingBatchTask in scrape())
             {
-                ICDListings listingBatch = listingBatchTask.Result;
-                Total = listingBatch.Count;
-                repository.AddorUpdate(listingBatch.Listings, 250, true);
+                listingBatchTask.ContinueWith(completed =>
+                 {
+                     switch (completed.Status)
+                     {
+                         case TaskStatus.RanToCompletion: onBatchScrapeCompleted(repository, completed.Result); break;
+                         case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
+
+                     }
+                 }, TaskScheduler.Default);
             }
         }
 
-        public static IEnumerable<Task<ICDListings>> ScrapeAll()
+        private static void OnBatchScrapeCompleted(ICDListingRepository repository, ICDListings listingsBatch)
         {
-            double minPerMile = .1;
-            for (int t = 0, i = 0; t < Total; t += perPage, i++)
-            {
-                yield return ScrapeCD.BuildEndpointAll(minPerMile, t, perPage).GetListings();
-            }
+            repository.AddorUpdate(listingsBatch.Listings, DATABASE_BATCH_SIZE, true);
+        }
+        private static void OnBatchScrapeError(Exception e)
+        {
+            //TODO: handle error
         }
 
-        public static async Task<ICDListings> GetListings(this string endpoint)
+
+        private static IList<Task<ICDListings>> ScrapeAll()
+        {
+            var firstBatch = ScrapeCD.BuildEndpointAll(MIN_PER_MILE, 0, SCRAPE_BATCH_SIZE).GetListings().Result;
+            int absoluteTotal = firstBatch.Count;
+
+            IList<Task<ICDListings>> scrapeBatches = new List<Task<ICDListings>>();
+            for (int t = 0; t < absoluteTotal; t += ScrapeCD.SCRAPE_BATCH_SIZE)
+            {
+                scrapeBatches.Add(ScrapeCD.BuildEndpointAll(MIN_PER_MILE, t, SCRAPE_BATCH_SIZE).GetListings());
+            }
+
+
+            return scrapeBatches;
+        }
+
+        private static async Task<ICDListings> GetListings(this string endpoint)
         {
             string response = await HttpGet.Get(endpoint, "Cookie", BuildCookieHeader());
             if (response == null)

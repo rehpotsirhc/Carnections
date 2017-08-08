@@ -3,10 +3,16 @@ using CentralDispatchData.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+
 namespace CentralDispatchData.Repositories
 {
-    public class CDListingRepository
+    public class CDListingRepository : ICDListingRepository
     {
+
+        private const int DEFAULT_COMMIT_COUNT = -1;
+        private const bool DEFAULT_RECREATE_CONTEXT = false;
+
         CDListingDbContext _dbContext;
 
         public CDListingRepository(CDListingDbContext dbContext)
@@ -14,7 +20,7 @@ namespace CentralDispatchData.Repositories
             _dbContext = dbContext;
         }
 
-        public void DeleteOld(int daysOld, int commitCount, bool recreateContext)
+        public void DeleteOld(int daysOld, int commitCount = DEFAULT_COMMIT_COUNT, bool recreateContext = DEFAULT_RECREATE_CONTEXT)
         {
             if (_dbContext == null || recreateContext)
                 _dbContext = new CDListingDbContext();
@@ -25,7 +31,7 @@ namespace CentralDispatchData.Repositories
             BulkDatbaseOperation(listings, commitCount, recreateContext, DeleteToContext);
         }
 
-        public void AddorUpdate(IEnumerable<ICDListing> listings, int commitCount, bool recreateContext)
+        public void AddorUpdate(IEnumerable<ICDListing> listings, int commitCount = DEFAULT_COMMIT_COUNT, bool recreateContext = DEFAULT_RECREATE_CONTEXT)
         {
             //listings must be the full ICDListing and not ICDListingMinimal
             BulkDatbaseOperation(listings, commitCount, recreateContext, AddorUpdateToContext);
@@ -38,9 +44,12 @@ namespace CentralDispatchData.Repositories
            return _dbContext.Set<ICDListing>();
         }
 
-        private void BulkDatbaseOperation(IEnumerable<ICDListingMinimal> listings, int commitCount, bool recreateContext,
-            Func<ICDListingMinimal, CDListingDbContext, CDListingDbContext> dataBaseOperation)
+        private async void BulkDatbaseOperation(IEnumerable<ICDListingMinimal> listings, int commitCount, bool recreateContext,
+            Action<ICDListingMinimal, CDListingDbContext> dataBaseOperation)
         {
+            if (commitCount == DEFAULT_COMMIT_COUNT)
+                commitCount = listings.Count();
+
             try
             {
                 if (_dbContext == null || recreateContext)
@@ -50,11 +59,11 @@ namespace CentralDispatchData.Repositories
                 foreach (var listing in listings)
                 {
 
-                    _dbContext = dataBaseOperation(listing, _dbContext);
-                    _dbContext = SaveAndFlush(_dbContext, ++count, commitCount, recreateContext);
+                    dataBaseOperation(listing, _dbContext);
+                    _dbContext = await SaveAndFlush(_dbContext, ++count, commitCount, recreateContext);
                 }
 
-                _dbContext.SaveChanges();
+               await _dbContext.SaveChangesAsync();
             }
             finally
             {
@@ -64,32 +73,29 @@ namespace CentralDispatchData.Repositories
 
         }
 
-        private static CDListingDbContext AddorUpdateToContext(ICDListingMinimal listing, CDListingDbContext context)
+        private static async void AddorUpdateToContext(ICDListingMinimal listing, CDListingDbContext context)
         {
             listing.ModifiedDate = DateTime.UtcNow;
             var dbSetForFind = context.Set<ICDListingMinimal>();
-            var foundListing = dbSetForFind.Find(listing.ListingId);
+            var foundListing = await dbSetForFind.FindAsync(listing.ListingId);
 
             var dbSetFull = context.Set<ICDListing>();
 
             if (foundListing == null || foundListing.ListingId < 0)
-                dbSetFull.Add((ICDListing)listing);
+                await dbSetFull.AddAsync((ICDListing)listing);
             else dbSetFull.Update((ICDListing)listing);
-
-            return context;
         }
-        private static CDListingDbContext DeleteToContext(ICDListingMinimal listing, CDListingDbContext context)
+        private static void DeleteToContext(ICDListingMinimal listing, CDListingDbContext context)
         {
             var dbSet = context.Set<ICDListingMinimal>();
             dbSet.Remove(listing);
-            return context;
         }
 
-        private static CDListingDbContext SaveAndFlush(CDListingDbContext context, int count, int commitCount, bool recreateContext)
+        private static async Task<CDListingDbContext> SaveAndFlush(CDListingDbContext context, int count, int commitCount, bool recreateContext)
         {
             if (count % commitCount == 0)
             {
-                context.SaveChanges();
+                await context.SaveChangesAsync();
                 if (recreateContext)
                 {
                     context.Dispose();
