@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Common.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Common.Models
 {
-    public class Price
+    public class Price : IPrice
     {
         public double DriverPay { get; private set; }
         public double Deposit { get; private set; }

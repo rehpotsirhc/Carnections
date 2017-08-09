@@ -1,4 +1,4 @@
-﻿using CentralDispatchData.interfaces;
+﻿using Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 namespace CentralDispatchData
 {
@@ -13,8 +13,8 @@ namespace CentralDispatchData
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-            modelBuilder.Entity<ICDListing>().ToTable("CDListing");
-            modelBuilder.Entity<ICDListing>().HasKey(d => d.ListingId);
+            modelBuilder.Entity<ITransformedListing>().ToTable("TransformedListing");
+            modelBuilder.Entity<ITransformedListing>().HasKey(d => d.ListingId);
             //  modelBuilder.Entity<ICDListing>().Property(d => d.Id).ValueGeneratedOnAdd();
         }
 

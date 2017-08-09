@@ -1,7 +1,7 @@
 ﻿
-namespace Common.Models
+namespace Enums.Models
 {
-    public enum TrailerType
+    public enum ETrailerType
     {
         Enclosed,
         Open,

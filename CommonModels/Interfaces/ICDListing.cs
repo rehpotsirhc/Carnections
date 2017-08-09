@@ -1,18 +1,15 @@
-﻿using CentralDispatchData.Models;
-using Common.Interfaces;
-using Common.Models;
-using System;
+﻿using Enums.Models;
 
-namespace CentralDispatchData.interfaces
+namespace Common.Interfaces
 {
-    public interface ICDListing : ICDListingMinimal, IHasId
+    public interface ICDListing : IHasListingId
     {
         ILonLat Pickup { get; set; }
         ILonLat Delivery { get; set; }
         double Price { get; set; }
         double PricePerMile { get; set; }
         bool VehicleOperable { get; set; }
-        TrailerType ShipMethod { get; set; }
+        ETrailerType ShipMethod { get; set; }
         string VehicleTypes { get; set; }
         string TruckMiles { get; set; }
         bool LocationsValid { get; set; }

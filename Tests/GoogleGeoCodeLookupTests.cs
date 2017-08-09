@@ -1,12 +1,8 @@
 ﻿using GoogleDistance;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
-using GoogleDistance.Models;
 using Common.Models;
 using Common.Interfaces;
-using ScrapeCentralDispatch.Models;
+using Common.Enums;
 
 namespace Tests
 {
@@ -24,7 +20,7 @@ namespace Tests
                 Longitude = -111.96
             };
 
-            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, EStateNameForm.Abbreviation);
 
             LocationBasicTest(actual, expected);
         }
@@ -47,7 +43,7 @@ namespace Tests
                 State = expected.State,
                 Zip = expected.Zip
             },
-                StateNameForm.Abbreviation);
+                EStateNameForm.Abbreviation);
 
             LocationBasicTest(actual, expected);
         }
@@ -64,7 +60,7 @@ namespace Tests
                 Latitude = 40.71,
                 Longitude = -111.96
             };
-            var actual = await LookupLonLat.Lookup(expected.City + " " + expected.State + " " + expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City + " " + expected.State + " " + expected.Zip, EStateNameForm.Abbreviation);
             LocationBasicTest(actual, expected);
 
         }
@@ -80,7 +76,7 @@ namespace Tests
                 Latitude = 40.71,
                 Longitude = -111.96
             };
-            var actual = await LookupLonLat.Lookup(expected.City + ", " + expected.State + " " + expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City + ", " + expected.State + " " + expected.Zip, EStateNameForm.Abbreviation);
             LocationBasicTest(actual, expected);
         }
 
@@ -94,7 +90,7 @@ namespace Tests
                 Latitude = 40.76,
                 Longitude = -111.89
             };
-            var actual = await LookupLonLat.Lookup(expected.City + ", " + expected.State, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City + ", " + expected.State, EStateNameForm.Abbreviation);
             CityBasicTest(actual, expected);
             StateBasicTest(actual, expected);
             LatLonBasicTest(actual, expected);
@@ -109,7 +105,7 @@ namespace Tests
                 Latitude = 40.71,
                 Longitude = -111.96
             };
-            var actual = await LookupLonLat.Lookup(expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.Zip, EStateNameForm.Abbreviation);
             ZipBasicTest(actual, expected);
             LatLonBasicTest(actual, expected);
         }
@@ -126,7 +122,7 @@ namespace Tests
                 Longitude = -90.20
             };
 
-            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, EStateNameForm.Abbreviation);
 
             CityBasicTest(actual, expected);
             StateBasicTest(actual, expected);
@@ -144,7 +140,7 @@ namespace Tests
                 Longitude = -90.20
             };
 
-            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, StateNameForm.Abbreviation);
+            var actual = await LookupLonLat.Lookup(expected.City, expected.State, expected.Zip, EStateNameForm.Abbreviation);
 
 
             StateBasicTest(actual, expected);

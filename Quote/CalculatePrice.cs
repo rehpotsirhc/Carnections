@@ -1,18 +1,16 @@
-﻿using CentralDispatchData.interfaces;
-using Common.Interfaces;
+﻿using Common.Interfaces;
 using Common.Models;
-using Quote.Models;
+using Common.Utils;
+using Enums.Models;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Quote
 {
     public static class QuoteCalculator
     {
     
-        public static Price CalculatePrice(this IEnumerable<ICDListing> listings, TrailerType myTrailerType, bool myIsOperable, VehicleType myVehicleType)
+        public static Price CalculatePrice(this IEnumerable<ITransformedListing> listings, ETrailerType myTrailerType, bool myIsOperable, EVehicleType myVehicleType)
         {
             if (listings == null)
                 return new Price(0, 0);
@@ -23,18 +21,17 @@ namespace Quote
             var vehicleTypeSize = new VehicleTypeSize(myVehicleType);
             var traielrTypeWeight = new TrailerTypeWeight(myTrailerType);
 
-            foreach (ICDListing l in listings)
+            foreach (TransformedListing transformedListing in listings)
             {
-                TransformedListing transformedListing = new TransformedListing(l);
 
-                double price = transformedListing.ListingOriginal.Price / transformedListing.VehicleCount;
+                double price = transformedListing.Price / transformedListing.VehicleCount;
 
                 price *= vehicleTypeSize.SizeWeight.Weight / transformedListing.AverageVehicleWeight;
                 price *= traielrTypeWeight.Weight / transformedListing.TrailerTypeWeight.Weight;
 
-                if (!transformedListing.ListingOriginal.VehicleOperable && myIsOperable) // listing is inop, we're op so decrease price 
+                if (!transformedListing.VehicleOperable && myIsOperable) // listing is inop, we're op so decrease price 
                     chargeForInop *= -1;
-                else if (transformedListing.ListingOriginal.VehicleOperable == myIsOperable) //listing is same as my vehicle, so don't change
+                else if (transformedListing.VehicleOperable == myIsOperable) //listing is same as my vehicle, so don't change
                     chargeForInop = 0;
 
                 price += (chargeForInop * transformedListing.VehicleCount);

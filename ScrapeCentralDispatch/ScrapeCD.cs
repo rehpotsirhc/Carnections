@@ -1,17 +1,15 @@
-﻿using CentralDispatchData.Models;
-using CentralDispatchData.Repositories;
+﻿using CentralDispatchData.Repositories;
 using Common.Interfaces;
-using Common.Models;
 using Common.Utils;
+using Enums.Models;
 using GoogleDistance.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Linq;
 namespace ScrapeCentralDispatch
 {
     //Perhaps this method should not be static and instead be an instance class with a backing interface
@@ -26,36 +24,25 @@ namespace ScrapeCentralDispatch
         // code from
         // https://blogs.msdn.microsoft.com/pfxteam/2012/08/02/processing-tasks-as-they-complete/
         public static void ScrapeAllAndSave(ICDListingRepository repository,
-            Action<ICDListingRepository, Func<IList<Task<ICDListings>>>, Action<ICDListingRepository, ICDListings>, Action<Exception>> runTasksConcurrently = null,
-            Func<IList<Task<ICDListings>>> scrape = null,
-            Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
+            Action<ICDListingRepository, Func<IList<Task<ICDListingCollection>>>, Action<ICDListingRepository, ICDListingCollection>, Action<Exception>> scrapeAllAndSaveConcurrently = null,
+            Func<IList<Task<ICDListingCollection>>> scrape = null,
+            Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
         {
             //need to try/test Method1 and Method2
-            runTasksConcurrently = runTasksConcurrently ?? RunTasksConcurrently_Method2;
+            scrapeAllAndSaveConcurrently = scrapeAllAndSaveConcurrently ?? RunTasksConcurrently_Method2;
             scrape = scrape ?? ScrapeAll;
             onBatchScrapeCompleted = onBatchScrapeCompleted ?? OnBatchScrapeCompleted;
             onBatchScrapeError = onBatchScrapeError ?? OnBatchScrapeError;
 
-            foreach (Task<ICDListings> listingBatchTask in scrape())
-            {
-                listingBatchTask.ContinueWith(completed =>
-                 {
-                     switch (completed.Status)
-                     {
-                         case TaskStatus.RanToCompletion: onBatchScrapeCompleted(repository, completed.Result); break;
-                         case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
-
-                     }
-                 }, TaskScheduler.Default);
-            }
+            scrapeAllAndSaveConcurrently(repository, scrape, onBatchScrapeCompleted, onBatchScrapeError);
 
 
         }
 
-        private static void RunTasksConcurrently_Method1(ICDListingRepository repository, Func<IList<Task<ICDListings>>> scrape,
-            Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        private static void RunTasksConcurrently_Method1(ICDListingRepository repository, Func<IList<Task<ICDListingCollection>>> scrape,
+            Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
         {
-            foreach (Task<ICDListings> listingBatchTask in scrape())
+            foreach (Task<ICDListingCollection> listingBatchTask in scrape())
             {
                 listingBatchTask.ContinueWith(completed =>
                 {
@@ -69,10 +56,10 @@ namespace ScrapeCentralDispatch
             }
         }
 
-        private static async void RunTasksConcurrently_Method2(ICDListingRepository repository, Func<IList<Task<ICDListings>>> scrape,
-        Action<ICDListingRepository, ICDListings> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        private static async void RunTasksConcurrently_Method2(ICDListingRepository repository, Func<IList<Task<ICDListingCollection>>> scrape,
+        Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
         {
-            IList<Task<ICDListings>> tasks = scrape();
+            IList<Task<ICDListingCollection>> tasks = scrape();
             while (tasks.Count > 0)
             {
                 var t = await Task.WhenAny(tasks);
@@ -83,9 +70,9 @@ namespace ScrapeCentralDispatch
             }
         }
 
-        private static void OnBatchScrapeCompleted(ICDListingRepository repository, ICDListings listingsBatch)
+        private static void OnBatchScrapeCompleted(ICDListingRepository repository, ICDListingCollection listingsBatch)
         {
-            repository.AddorUpdate(listingsBatch.Listings, DATABASE_BATCH_SIZE, true);
+            repository.AddorUpdate(listingsBatch.Listings.Select(l => CDListingTransformer.Transform(l)), DATABASE_BATCH_SIZE, true);
         }
         private static void OnBatchScrapeError(Exception e)
         {
@@ -93,13 +80,13 @@ namespace ScrapeCentralDispatch
         }
 
 
-        private static IList<Task<ICDListings>> ScrapeAll()
+        private static IList<Task<ICDListingCollection>> ScrapeAll()
         {
             int i = 0;
             var firstBatch = ScrapeCD.BuildEndpointAll(MIN_PER_MILE, i, SCRAPE_BATCH_SIZE).GetListings().Result;
             int absoluteTotal = firstBatch.Count;
 
-            IList<Task<ICDListings>> scrapeBatches = new List<Task<ICDListings>>() { Task.FromResult(firstBatch) };
+            IList<Task<ICDListingCollection>> scrapeBatches = new List<Task<ICDListingCollection>>() { Task.FromResult(firstBatch) };
 
 
             for (i = 1; i < absoluteTotal; i += ScrapeCD.SCRAPE_BATCH_SIZE)
@@ -111,7 +98,7 @@ namespace ScrapeCentralDispatch
             return scrapeBatches;
         }
 
-        private static async Task<ICDListings> GetListings(this string endpoint)
+        private static async Task<ICDListingCollection> GetListings(this string endpoint)
         {
             string response = await HttpGet.Get(endpoint, "Cookie", BuildCookieHeader());
             if (response == null)
@@ -119,7 +106,7 @@ namespace ScrapeCentralDispatch
             try
             {
                 // return JsonConvert.DeserializeObject<CentralDispatchListings>(response, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
-                return JsonConvert.DeserializeObject<ICDListings>(response);
+                return JsonConvert.DeserializeObject<ICDListingCollection>(response);
             }
             catch (Exception)
             {
@@ -128,7 +115,7 @@ namespace ScrapeCentralDispatch
         }
 
 
-        private static string BuildEndpoint(ICityStateZip pickup, int pickupRadius, ICityStateZip delivery, int deliveryRadius, TrailerType trailerType, bool operable, int shipWithin, double minPerMile)
+        private static string BuildEndpoint(ICityStateZip pickup, int pickupRadius, ICityStateZip delivery, int deliveryRadius, ETrailerType trailerType, bool operable, int shipWithin, double minPerMile)
         {
 
             // string condition = operable ? "1" : "0";

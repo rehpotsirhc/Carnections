@@ -1,7 +1,7 @@
 ﻿using Common.Interfaces;
 using Common.Models;
 
-namespace ScrapeCentralDispatch.Models
+namespace Common.Models
 {
     public class Location: CityStateZip, ILocation, ICityStateZip, ILonLat
     {

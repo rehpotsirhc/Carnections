@@ -4,6 +4,7 @@ using Common.Models;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Collections.Generic;
+using Common.Enums;
 
 namespace GoogleDistance.Models
 {
@@ -78,7 +79,7 @@ namespace GoogleDistance.Models
     }
 
 
-    public class CityStateZipBuilder 
+    public class CityStateZipBuilder :IEquatable<CityStateZipBuilder>
     {
         public static readonly int ZIP_DEGREE = 3;
         public static readonly int CITY_DEGREE = 2;
@@ -99,7 +100,7 @@ namespace GoogleDistance.Models
         //84111
         /// </summary>
         /// <param name="fullLocationString"></param>
-        private CityStateZipBuilder(string fullLocationString, StateNameForm stateNameFormOverride = StateNameForm.NoPreference)
+        private CityStateZipBuilder(string fullLocationString, EStateNameForm stateNameFormOverride = EStateNameForm.NoPreference)
         {
             string city = "", state = "", zip = "";
             if (String.IsNullOrWhiteSpace(fullLocationString = fullLocationString.RemoveWhiteSpace().Trim()))
@@ -169,7 +170,7 @@ namespace GoogleDistance.Models
 
 
 
-        private CityStateZipBuilder(string city = null, string state = null, string zip = null, StateNameForm stateNameFormOverride = StateNameForm.NoPreference)
+        private CityStateZipBuilder(string city = null, string state = null, string zip = null, EStateNameForm stateNameFormOverride = EStateNameForm.NoPreference)
         {
             this.City = String.IsNullOrWhiteSpace(city) ? "" : city.RemoveWhiteSpace().Trim();
             this.State = String.IsNullOrWhiteSpace(state) ? "" : state.RemoveWhiteSpace().Trim();
@@ -177,13 +178,13 @@ namespace GoogleDistance.Models
             this.Zip = String.IsNullOrWhiteSpace(zip) ? "" : zip.RemoveWhiteSpace().Trim();
         }
 
-        public static ICityStateZipWithString Build(string fullLocationString, StateNameForm stateNameFormOverride = StateNameForm.NoPreference)
+        public static ICityStateZipWithString Build(string fullLocationString, EStateNameForm stateNameFormOverride = EStateNameForm.NoPreference)
         {
             var builder = new CityStateZipBuilder(fullLocationString, stateNameFormOverride);
             return CityStateZipBuilder.Build(builder);
         }
 
-        public static ICityStateZipWithString Build(string city = null, string state = null, string zip = null, StateNameForm stateNameFormOverride = StateNameForm.NoPreference)
+        public static ICityStateZipWithString Build(string city = null, string state = null, string zip = null, EStateNameForm stateNameFormOverride = EStateNameForm.NoPreference)
         {
             var builder = new CityStateZipBuilder(city, state, zip, stateNameFormOverride);
             return CityStateZipBuilder.Build(builder);
@@ -245,7 +246,10 @@ namespace GoogleDistance.Models
 
         public override bool Equals(object obj)
         {
-            var that = (CityStateZipBuilder)obj;
+            return Equals((CityStateZipBuilder)obj);
+        }
+        public bool Equals(CityStateZipBuilder that)
+        {
             return CityStateZipBuilder.Equals(CityStateZipBuilder.Build(this), CityStateZipBuilder.Build(that));
         }
 

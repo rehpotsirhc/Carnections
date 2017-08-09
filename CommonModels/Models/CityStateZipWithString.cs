@@ -2,7 +2,7 @@
 
 namespace Common.Models
 {
-    class CityStateZipWithString : CityStateZip, ICityStateZipWithString, ICityStateZip, ICityStateZipString
+    class CityStateZipWithString : CityStateZip, ICityStateZipWithString
     {
         public string FullAddress { get; set; }
 

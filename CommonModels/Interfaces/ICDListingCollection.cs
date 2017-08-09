@@ -1,11 +1,9 @@
-﻿using CentralDispatchData.interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+
 
 namespace Common.Interfaces
 {
-    public interface ICDListings
+    public interface ICDListingCollection
     {
         int Count { get; set; }
         int PageStart { get; set; }

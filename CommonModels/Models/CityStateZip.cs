@@ -10,9 +10,14 @@ namespace Common.Models
         public string State { get; set; }
         public string Zip { get; set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object that)
         {
-            return CityStateZipBuilder.Equals(this, (CityStateZip)obj);
+            return Equals((ICityStateZip)that);
+        }
+
+        public bool Equals(ICityStateZip that)
+        {
+            return CityStateZipBuilder.Equals(this, that);
         }
         public int DegreeOfEquals(ICityStateZip that)
         {

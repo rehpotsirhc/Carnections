@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Quote.Models
+namespace Enums.Models
 {
-    public enum VehicleType
+    public enum EVehicleType
     {
         Unknown,
         ATV,
@@ -22,9 +22,5 @@ namespace Quote.Models
         Other
 
     }
-    public enum VehicleSize
-    {
-        Large,
-        Small
-    }
+   
 }

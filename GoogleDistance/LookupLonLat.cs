@@ -1,7 +1,7 @@
-﻿using Common.Interfaces;
+﻿using Common.Enums;
+using Common.Interfaces;
 using Common.Models;
 using GoogleDistance.Models;
-using ScrapeCentralDispatch.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,24 +23,24 @@ namespace GoogleDistance
 
         }
 
-        public static async Task<ILocation> Lookup(string city, string state, string zip, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string city, string state, string zip, EStateNameForm stateNameForm)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(city, state, zip, stateNameForm);
             return await FindMatchTiered(standardizedLocation, stateNameForm);
 
         }
-        public static async Task<ILocation> Lookup(ICityStateZip location, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(ICityStateZip location, EStateNameForm stateNameForm)
         {
             return await Lookup(location.City, location.State, location.Zip, stateNameForm);
         }
 
-        public static async Task<ILocation> Lookup(string location, StateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string location, EStateNameForm stateNameForm)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(location, stateNameForm);
             return await FindMatchTiered(standardizedLocation, stateNameForm);
         }
 
-        private static async Task<ILocation> FindMatchTiered(ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm)
+        private static async Task<ILocation> FindMatchTiered(ICityStateZipWithString standardizedLocation, EStateNameForm stateNameForm)
         {
             var googleLatLons = new List<Tuple<int, ILocation>>();
             Tuple<int, ILocation> best = null;
@@ -57,7 +57,7 @@ namespace GoogleDistance
 
             return best?.Item2;
         }
-        private static bool FindMatch(GoogleGeocode geocode, ICityStateZipWithString standardizedLocation, StateNameForm stateNameForm, List<Tuple<int, ILocation>> googleLatLons, ref Tuple<int, ILocation> best)
+        private static bool FindMatch(GoogleGeocode geocode, ICityStateZipWithString standardizedLocation, EStateNameForm stateNameForm, List<Tuple<int, ILocation>> googleLatLons, ref Tuple<int, ILocation> best)
         {
             if (googleLatLons == null)
                 googleLatLons = new List<Tuple<int, ILocation>>();
@@ -101,7 +101,7 @@ namespace GoogleDistance
             return await CallGoogleGeocode.BuildEndpoint(standardizedLocation.FullAddress)?.GetGeoCode();
         }
 
-        private static async Task<GoogleGeocode> GetGeocodeByCityState(string city, string state, StateNameForm stateNameForm)
+        private static async Task<GoogleGeocode> GetGeocodeByCityState(string city, string state, EStateNameForm stateNameForm)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(city, state, null, stateNameForm);
             return await CallGoogleGeocode.BuildEndpoint(standardizedLocation.FullAddress)?.GetGeoCode();
@@ -109,7 +109,7 @@ namespace GoogleDistance
 
         private static async Task<GoogleGeocode> GetGeocodeByZip(string zip)
         {
-            ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(null, null, zip, StateNameForm.NoPreference);
+            ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(null, null, zip, EStateNameForm.NoPreference);
             return await CallGoogleGeocode.BuildEndpoint(standardizedLocation.FullAddress)?.GetGeoCode();
         }
 

@@ -1,7 +1,9 @@
 ﻿
+using System;
+
 namespace Common.Interfaces
 {
-    public interface ICityStateZip
+    public interface ICityStateZip: IEquatable<ICityStateZip>
     {
         string City { get; }
         string State { get; }

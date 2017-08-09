@@ -1,28 +1,21 @@
-﻿using CentralDispatchData.interfaces;
-using System.Collections.Generic;
-using Common.Models;
-using Newtonsoft.Json;
+﻿using Common.Interfaces;
 using System;
-using Common.Interfaces;
+using System.Collections.Generic;
+using System.Text;
+using Enums.Models;
+using Newtonsoft.Json;
 
-namespace CentralDispatchData.Models
+namespace Common.Models
 {
-    public class CDListings : ICDListings
+    public class CDListing : ICDListing
     {
-        public int Count { get; set; }
-        public int PageStart { get; set; }
-        public IList<ICDListing> Listings { get; set; }
-    }
-    public class CDListing : CDListingMinimal, ICDListing, ICDListingMinimal
-    {
-
-        public int Id { get { return ListingId; } }
+        public int ListingId { get; set; }
         public ILonLat Pickup { get; set; }
         public ILonLat Delivery { get; set; }
         public double Price { get; set; }
         public double PricePerMile { get; set; }
         public bool VehicleOperable { get; set; }
-        public TrailerType ShipMethod { get; set; }
+        public ETrailerType ShipMethod { get; set; }
         [JsonProperty("vehicle_types")]
         public string VehicleTypes { get; set; }
         public string TruckMiles { get; set; }
