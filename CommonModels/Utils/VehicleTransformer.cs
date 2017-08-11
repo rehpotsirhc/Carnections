@@ -1,9 +1,6 @@
 ﻿using Common.Interfaces;
 using Common.Models;
 using Enums.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Common.Utils
 {

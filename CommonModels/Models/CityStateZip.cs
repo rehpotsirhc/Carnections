@@ -1,6 +1,5 @@
 ﻿using Common.Interfaces;
 using GoogleDistance.Models;
-using System;
 
 namespace Common.Models
 {

@@ -1,7 +1,4 @@
 ﻿using Common.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Enums.Models;
 using Newtonsoft.Json;
 

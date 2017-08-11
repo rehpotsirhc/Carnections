@@ -10,6 +10,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+
 namespace ScrapeCentralDispatch
 {
     //Perhaps this method should not be static and instead be an instance class with a backing interface

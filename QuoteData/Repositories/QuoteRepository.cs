@@ -1,9 +1,4 @@
 ﻿using Common.Interfaces;
-using Common.Models;
-using Enums.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace QuoteData.Repositories

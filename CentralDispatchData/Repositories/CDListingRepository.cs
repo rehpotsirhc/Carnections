@@ -8,7 +8,6 @@ namespace CentralDispatchData.Repositories
 {
     public class CDListingRepository : ICDListingRepository
     {
-
         private const int DEFAULT_COMMIT_COUNT = -1;
         private const bool DEFAULT_RECREATE_CONTEXT = false;
 

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Common.Interfaces;
 using System.Linq;
+
 namespace VehicleData.Repositories
 {
     public class VehicleRepository : IVehicleRepository

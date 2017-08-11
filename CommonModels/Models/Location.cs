@@ -1,5 +1,4 @@
 ﻿using Common.Interfaces;
-using Common.Models;
 
 namespace Common.Models
 {

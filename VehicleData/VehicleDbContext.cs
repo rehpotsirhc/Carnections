@@ -1,6 +1,5 @@
 ﻿using Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace VehicleData
 {

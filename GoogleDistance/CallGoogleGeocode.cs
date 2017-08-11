@@ -1,6 +1,4 @@
-﻿using Common.Interfaces;
-using Common.Models;
-using Common.Utils;
+﻿using Common.Utils;
 using GoogleDistance.Models;
 using Newtonsoft.Json;
 using System;

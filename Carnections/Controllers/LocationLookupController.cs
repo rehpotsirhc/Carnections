@@ -7,7 +7,6 @@ namespace Carnections.Controllers
 {
     public class LocationLookupController
     {
-
         public async Task<IActionResult> LookupCityStateZip(ICityStateZip cityStatezip)
         {
             return new OkObjectResult(await LookupLonLat.Lookup(cityStatezip));
