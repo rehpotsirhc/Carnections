@@ -6,6 +6,6 @@ namespace Common.Interfaces
 {
     public interface IHasListingId
     {
-        int ListingId { get; set; }
+        int ListingId { get; }
     }
 }

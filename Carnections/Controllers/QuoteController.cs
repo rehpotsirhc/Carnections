@@ -20,10 +20,21 @@ namespace Carnections.Controllers
             _CDListingsRepository = repository;
         }
 
-        public async Task<IActionResult> CalculateQuote(ILonLat pickup, ILonLat delivery, ETrailerType myTrailerType, bool myIsOperable, EVehicleType myVehicleType)
+        [HttpPost]
+        public async Task<IActionResult> CalculateQuote([FromBody]IQuote quote)
         {
-            return new OkObjectResult((await CDTransportMap.GetMap(_CDListingsMapCache, _CDListingsRepository)).Search(pickup, delivery).CalculatePrice(myTrailerType, myIsOperable, myVehicleType));
+            return new OkObjectResult(await CalculateQuoteHelper(quote.Pickup, quote.Delivery, quote.TrailerType, quote.VehicleIsOperable, quote.Vehicle));
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CalculateQuote([FromBody]ILocation pickup, [FromBody]ILocation delivery, [FromBody]ETrailerType trailerType, [FromBody] bool isOperable, [FromBody]IVehicleMinimal vehicleMinimal)
+        {
+            return new OkObjectResult(await CalculateQuoteHelper(pickup, delivery, trailerType, isOperable, vehicleMinimal));
+        }
+
+        private async Task<IPrice> CalculateQuoteHelper(ILocation pickup, ILocation delivery, ETrailerType trailerType, bool isOperable, IVehicleMinimal vehicleMinimal)
+        {
+            return (await CDTransportMap.GetMap(_CDListingsMapCache, _CDListingsRepository)).Search(pickup, delivery).CalculatePrice(trailerType, isOperable, vehicleMinimal);
+        }
     }
 }

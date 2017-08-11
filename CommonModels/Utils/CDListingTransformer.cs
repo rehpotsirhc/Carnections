@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Common.Utils
 {
-    public class CDListingTransformer
+    public static class CDListingTransformer
     {
         public static ITransformedListing Transform(ICDListing originalListing)
         {
@@ -62,7 +62,7 @@ namespace Common.Utils
                     EVehicleType vehicleType;
                     if (Enum.TryParse(Regex.Replace(vehicleString, "\\s+", ""), out vehicleType))
                     {
-                        var typeSize = new VehicleTypeSize(vehicleType);
+                        var typeSize = VehicleTransformer.Build(vehicleType);
                         vehicleTypeSizes.Add(typeSize);
                         averageVehicleWeight += typeSize.SizeWeight.Weight;
                         vehicleCount += 1;

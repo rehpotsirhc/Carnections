@@ -7,8 +7,8 @@ namespace Common.Models
 {
     public class Price : IPrice
     {
-        public double DriverPay { get; private set; }
-        public double Deposit { get; private set; }
+        public double DriverPay { get; set; }
+        public double Deposit { get; set; }
 
         public double Total
         {
@@ -16,12 +16,6 @@ namespace Common.Models
             {
                 return DriverPay + Deposit;
             }
-        }
-
-        public Price(double driverPay, double deposit)
-        {
-            this.DriverPay = driverPay;
-            this.Deposit = deposit;
         }
     }
 }

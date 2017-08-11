@@ -15,7 +15,7 @@ namespace CentralDispatchData
 
             modelBuilder.Entity<ITransformedListing>().ToTable("TransformedListing");
             modelBuilder.Entity<ITransformedListing>().HasKey(d => d.ListingId);
-            //  modelBuilder.Entity<ICDListing>().Property(d => d.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<ITransformedListing>().Property(d => d.CreatedDate).ValueGeneratedOnAdd();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

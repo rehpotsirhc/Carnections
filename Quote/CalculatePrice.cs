@@ -10,15 +10,15 @@ namespace Quote
     public static class QuoteCalculator
     {
     
-        public static Price CalculatePrice(this IEnumerable<ITransformedListing> listings, ETrailerType myTrailerType, bool myIsOperable, EVehicleType myVehicleType)
+        public static IPrice CalculatePrice(this IEnumerable<ITransformedListing> listings, ETrailerType myTrailerType, bool myIsOperable, IVehicleMinimal vehicleMinimal)
         {
             if (listings == null)
-                return new Price(0, 0);
+                return PriceBuilder.Build(0, 0);
 
             double chargeForInop = 150;
             double sumPrice = 0;
             double count = 0;
-            var vehicleTypeSize = new VehicleTypeSize(myVehicleType);
+            var vehicleFull = VehicleTransformer.Transform(vehicleMinimal);
             var traielrTypeWeight = new TrailerTypeWeight(myTrailerType);
 
             foreach (TransformedListing transformedListing in listings)
@@ -26,7 +26,7 @@ namespace Quote
 
                 double price = transformedListing.Price / transformedListing.VehicleCount;
 
-                price *= vehicleTypeSize.SizeWeight.Weight / transformedListing.AverageVehicleWeight;
+                price *= vehicleFull.TypeSize.SizeWeight.Weight / transformedListing.AverageVehicleWeight;
                 price *= traielrTypeWeight.Weight / transformedListing.TrailerTypeWeight.Weight;
 
                 if (!transformedListing.VehicleOperable && myIsOperable) // listing is inop, we're op so decrease price 
@@ -43,12 +43,12 @@ namespace Quote
                 }
             }
 
-            if (count == 0) return new Price(0, 0);
+            if (count == 0) return PriceBuilder.Build(0, 0);
             else
             {
                 double price = (sumPrice / count).ToNearestQuarter();
                 double deposit = price >= 1500 ? 200 : price < 150 ? 75 : 150;
-                return new Price(price, deposit);
+                return PriceBuilder.Build(price, deposit);
             }
 
         }

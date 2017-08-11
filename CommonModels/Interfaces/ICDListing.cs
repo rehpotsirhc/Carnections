@@ -4,14 +4,14 @@ namespace Common.Interfaces
 {
     public interface ICDListing : IHasListingId
     {
-        ILonLat Pickup { get; set; }
-        ILonLat Delivery { get; set; }
-        double Price { get; set; }
-        double PricePerMile { get; set; }
-        bool VehicleOperable { get; set; }
-        ETrailerType ShipMethod { get; set; }
-        string VehicleTypes { get; set; }
-        string TruckMiles { get; set; }
-        bool LocationsValid { get; set; }
+        ILonLat Pickup { get; }
+        ILonLat Delivery { get; }
+        double Price { get; }
+        double PricePerMile { get; }
+        bool VehicleOperable { get; }
+        ETrailerType ShipMethod { get; }
+        string VehicleTypes { get; }
+        string TruckMiles { get; }
+        bool LocationsValid { get; }
     }
 }

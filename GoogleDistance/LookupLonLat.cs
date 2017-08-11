@@ -23,18 +23,18 @@ namespace GoogleDistance
 
         }
 
-        public static async Task<ILocation> Lookup(string city, string state, string zip, EStateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string city, string state, string zip, EStateNameForm stateNameForm = EStateNameForm.Abbreviation)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(city, state, zip, stateNameForm);
             return await FindMatchTiered(standardizedLocation, stateNameForm);
 
         }
-        public static async Task<ILocation> Lookup(ICityStateZip location, EStateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(ICityStateZip cityStateZip, EStateNameForm stateNameForm = EStateNameForm.Abbreviation)
         {
-            return await Lookup(location.City, location.State, location.Zip, stateNameForm);
+            return await Lookup(cityStateZip.City, cityStateZip.State, cityStateZip.Zip, stateNameForm);
         }
 
-        public static async Task<ILocation> Lookup(string location, EStateNameForm stateNameForm)
+        public static async Task<ILocation> Lookup(string location, EStateNameForm stateNameForm = EStateNameForm.Abbreviation)
         {
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(location, stateNameForm);
             return await FindMatchTiered(standardizedLocation, stateNameForm);
@@ -112,14 +112,5 @@ namespace GoogleDistance
             ICityStateZipWithString standardizedLocation = CityStateZipBuilder.Build(null, null, zip, EStateNameForm.NoPreference);
             return await CallGoogleGeocode.BuildEndpoint(standardizedLocation.FullAddress)?.GetGeoCode();
         }
-
-
-
-
-
-
-
-
-
     }
 }

@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CentralDispatchData\CentralDispatchData.csproj" />
+    <ProjectReference Include="..\GoogleDistance\GoogleDistance.csproj" />
     <ProjectReference Include="..\Quote\Quote.csproj" />
   </ItemGroup>
 

@@ -6,6 +6,6 @@ namespace Common.Interfaces
 {
     public interface ICityStateZipString
     {
-        string FullAddress { get; set; }
+        string FullAddress { get; }
     }
 }

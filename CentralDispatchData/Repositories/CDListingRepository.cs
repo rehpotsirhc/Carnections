@@ -40,7 +40,7 @@ namespace CentralDispatchData.Repositories
             if (_dbContext == null)
                 _dbContext = new CDListingDbContext();
 
-           return _dbContext.Set<ITransformedListing>();
+            return _dbContext.Set<ITransformedListing>();
         }
 
         private async void BulkDatbaseOperation(IEnumerable<IHasListingIdAndChangeDates> listings, int commitCount, bool recreateContext,
@@ -62,7 +62,7 @@ namespace CentralDispatchData.Repositories
                     _dbContext = await SaveAndFlush(_dbContext, ++count, commitCount, recreateContext);
                 }
 
-               await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
             }
             finally
             {
@@ -81,7 +81,7 @@ namespace CentralDispatchData.Repositories
             var dbSetFull = context.Set<ITransformedListing>();
 
             if (foundListing == null || foundListing.ListingId < 0)
-                await dbSetFull.AddAsync((ITransformedListing)listing);
+                dbSetFull.Add((ITransformedListing)listing);
             else dbSetFull.Update((ITransformedListing)listing);
         }
         private static void DeleteToContext(IHasListingIdAndChangeDates listing, CDListingDbContext context)

@@ -5,8 +5,8 @@ namespace Common.Models
 {
     public class TrailerTypeWeight : ITrailerTypeWeight
     {
-        public ETrailerType Type { get; private set; }
-        public double Weight { get; private set; }
+        public ETrailerType Type { get; set; }
+        public double Weight { get; set; }
         public TrailerTypeWeight(ETrailerType type)
         {
             this.Type = type;

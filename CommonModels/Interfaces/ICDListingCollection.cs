@@ -5,8 +5,8 @@ namespace Common.Interfaces
 {
     public interface ICDListingCollection
     {
-        int Count { get; set; }
-        int PageStart { get; set; }
-        IList<ICDListing> Listings { get; set; }
+        int Count { get; }
+        int PageStart { get; }
+        IList<ICDListing> Listings { get; }
     }
 }
