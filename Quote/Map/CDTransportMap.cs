@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Threading.Tasks;
 using System;
 
-namespace Quote
+namespace Quote.Map
 {
     public class CDTransportMap
     {
@@ -52,7 +52,6 @@ namespace Quote
             }
         }
 
-
         public static async Task<CDTransportMap> GetMap(IMemoryCache cache, ICDListingRepository repository)
         {
             return await cache.GetOrCreateAsync<CDTransportMap>(CACHE_KEY, entry =>
@@ -61,8 +60,5 @@ namespace Quote
                 return Task.FromResult(new CDTransportMap(repository.GetAll()));
             });
         }
-
-
-
     }
 }
