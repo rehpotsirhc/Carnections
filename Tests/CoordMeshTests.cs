@@ -4,7 +4,9 @@ using System.Text;
 
 namespace Tests
 {
-    class CoordMeshTests
+    public class CoordMeshTests
     {
+
+
     }
 }

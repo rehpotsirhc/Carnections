@@ -234,7 +234,7 @@ namespace GoogleDistance.Models
 
         public static int GetHashCode(ICityStateZip cityStateZip)
         {
-            unchecked
+            unchecked //to avoid overflowing int
             {
                 int hash = 17;
                 hash = hash * 23 + cityStateZip.City.GetHashCode();

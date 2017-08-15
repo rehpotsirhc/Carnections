@@ -15,10 +15,9 @@ namespace GoogleDistance.Models
         public StateBuilder(string stateString)
         {
             stateString = stateString.RemoveWhiteSpace().Trim();
-            EStateEnumeration tmp;
 
             //try to convert based on StateEnumeration value (which are the abbreviations)
-            if (Enum.TryParse(stateString, true, out tmp))
+            if (Enum.TryParse(stateString, true, out EStateEnumeration tmp))
             {
                 StateNameFormFromInput = EStateNameForm.Abbreviation;
                 this.StateEnum = tmp;

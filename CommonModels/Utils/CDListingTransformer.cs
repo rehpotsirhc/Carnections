@@ -11,10 +11,7 @@ namespace Common.Utils
     {
         public static ITransformedListing Transform(ICDListing originalListing)
         {
-            IList<IVehicleTypeSize> vehicleTypesSizes;
-            double averageVehicleWeight;
-            int vehicleCount;
-            ParseVehicles(originalListing, out vehicleTypesSizes, out averageVehicleWeight, out vehicleCount);
+            ParseVehicles(originalListing, out IList<IVehicleTypeSize> vehicleTypesSizes, out double averageVehicleWeight, out int vehicleCount);
             return new TransformedListing()
             {
                 Delivery = originalListing.Delivery,
@@ -59,8 +56,7 @@ namespace Common.Utils
                 }
                 for (int i = 0; i < qty; i++)
                 {
-                    EVehicleType vehicleType;
-                    if (Enum.TryParse(Regex.Replace(vehicleString, "\\s+", ""), out vehicleType))
+                    if (Enum.TryParse(Regex.Replace(vehicleString, "\\s+", ""), out EVehicleType vehicleType))
                     {
                         var typeSize = VehicleTransformer.Build(vehicleType);
                         vehicleTypeSizes.Add(typeSize);

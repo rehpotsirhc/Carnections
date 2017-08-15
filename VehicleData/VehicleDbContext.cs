@@ -12,7 +12,6 @@ namespace VehicleData
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
             modelBuilder.Entity<IVehicleMinimal>().ToTable("Vehicle");
             modelBuilder.Entity<IVehicleMinimal>().HasKey(d => d.Id);
             modelBuilder.Entity<IVehicleMinimal>().Property(d => d.Id).ValueGeneratedOnAdd();
