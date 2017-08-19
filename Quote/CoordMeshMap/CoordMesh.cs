@@ -42,7 +42,7 @@ namespace Quote.CoordMeshMap
     //ISSUE: Everything outside boundary gets pushed to the edge of the boundary
     //see BoundaryCheck
 
-   
+
 
     //public class ItemCoord<T> : Coord
     //{
@@ -53,33 +53,75 @@ namespace Quote.CoordMeshMap
     //    }
     //}
 
+    public class BoundaryHandler
+    {
+        public PosInt Coord { get; }
+        public PosInt BoundaryLength { get; }
+        public bool Ok { get; }
+
+        public BoundaryHandler(int coord, int length)
+        {
+            try
+            {
+                Coord = new PosInt(coord);
+                BoundaryLength = new PosInt(length);
+                this.Ok = true;
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                //TODO: log?
+                this.Coord = -1;
+                this.BoundaryLength = -1;
+                this.Ok = false;
+            }
+        }
+
+        public static BoundaryHandler DefaultHandleBoundary(int coord, int length)
+        {
+            if (coord >= length)
+                coord = length - 1;
+            else if (coord < 0)
+                coord = 0;
+
+            return new BoundaryHandler(coord, length);
+        }
+    }
+
     public class CoordMesh
     {
 
         protected readonly CoordMeshSettings _settings;
-        private Func<int, int, int> _constrainBoundaryFunc;
+        private Func<int, int, BoundaryHandler> _handleBoundaryFunc;
 
-        public CoordMesh(CoordMeshSettings settings, Func<int, int, int> ConstrainBoundaryFunc = null)
+        public CoordMesh(CoordMeshSettings settings, Func<int, int, BoundaryHandler> handleBoundaryFunc = null)
         {
             this._settings = settings;
-            if (_constrainBoundaryFunc != null)
-                this._constrainBoundaryFunc = DefaultConstrainBoundary;
-
+            if (handleBoundaryFunc != null)
+                this._handleBoundaryFunc = handleBoundaryFunc;
+            else
+                this._handleBoundaryFunc = BoundaryHandler.DefaultHandleBoundary;
         }
 
-        public ICoord FitLonLat(double lon, double lat)
+        public ICoord FitLonLat(PosNumber lon, PosNumber lat)
         {
-            return new Coord(FitLon(lon), FitLat(lat));
+            var coord1 = FitLon(lon);
+            var coord2 = FitLat(lat);
+
+            if (!coord1.Ok || !coord1.Ok)
+            {
+                //TODO: throw exception? log?
+            }
+            return new Coord(coord1.Coord, coord2.Coord);
         }
 
-        public int FitLon(double lon)
+        public BoundaryHandler FitLon(PosNumber lon)
         {
-            return FitToCoord(lon, this._settings.LON_MAX, this._settings.LON_MIN, this._settings.RESOLUTION, this._constrainBoundaryFunc);
+            return FitToCoord(lon, this._settings.LON_MAX, this._settings.LON_MIN, this._settings.RESOLUTION, this._handleBoundaryFunc);
         }
 
-        public int FitLat(double lat)
+        public BoundaryHandler FitLat(PosNumber lat)
         {
-            return FitToCoord(lat, this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION, this._constrainBoundaryFunc);
+            return FitToCoord(lat, this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION, this._handleBoundaryFunc);
         }
         public int FitLonSide()
         {
@@ -89,20 +131,11 @@ namespace Quote.CoordMeshMap
         {
             return FitSide(this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION);
         }
-        public static int DefaultConstrainBoundary(int coord, int length)
+        private static BoundaryHandler FitToCoord(PosNumber point, PosInt max, PosInt min, PosNumber res, Func<int, int, BoundaryHandler> handleBoundaryFunc)
         {
-            if (coord >= length)
-                coord = length - 1;
-            else if (coord < 0)
-                coord = 0;
-
-            return coord;
+            return handleBoundaryFunc((int)Math.Floor((point.AsDouble - min.AsInt) / res), (max - min) + 1);
         }
-        private static int FitToCoord(double point, int max, int min, double res, Func<int, int, int> ConstrainBoundaryFunc)
-        {
-            return ConstrainBoundaryFunc((int)Math.Floor((point - min) / res), (max - min) + 1);
-        }
-        private static int FitSide(int max, int min, double resolution)
+        private static int FitSide(PosInt max, PosInt min, PosNumber resolution)
         {
             return (int)Math.Floor((max - min) / resolution);
         }
