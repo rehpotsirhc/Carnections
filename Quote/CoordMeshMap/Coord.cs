@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Quote.Map
+namespace Quote.CoordMeshMap
 {
     public interface ICoord
     {
-        int X { get; }
-        int Y { get; }
+        PosInt X { get; }
+        PosInt Y { get; }
     }
 
     public class Coord : ICoord, System.IEquatable<ICoord>
     {
-        public int X { get; }
-        public int Y { get; }
+        public PosInt X { get; }
+        public PosInt Y { get; }
 
         public Coord(int x, int y)
         {

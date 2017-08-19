@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Quote.Map
+namespace Quote.CoordMeshMap
 {
 
     //long range: -66.84(E) ==> -124.45(W)   *57.61

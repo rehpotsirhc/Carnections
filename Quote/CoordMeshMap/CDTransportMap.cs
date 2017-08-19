@@ -5,7 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Threading.Tasks;
 using System;
 
-namespace Quote.Map
+namespace Quote.CoordMeshMap
 {
     public class CDTransportMap
     {

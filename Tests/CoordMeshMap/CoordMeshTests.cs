@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Tests
+namespace Tests.CoordMeshMap
 {
     public class CoordMeshTests
     {

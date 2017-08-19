@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CommonModels\Common.csproj" />
     <ProjectReference Include="..\GoogleDistance\GoogleDistance.csproj" />
+    <ProjectReference Include="..\Quote\Quote.csproj" />
   </ItemGroup>
 
   <ItemGroup>

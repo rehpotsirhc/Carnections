@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Quote.Map
+namespace Quote.CoordMeshMap
 {
     public class PosNumber
     {
