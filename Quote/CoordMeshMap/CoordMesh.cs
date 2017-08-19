@@ -57,10 +57,14 @@ namespace Quote.CoordMeshMap
     {
 
         protected readonly CoordMeshSettings _settings;
+        private Func<int, int, int> _constrainBoundaryFunc;
 
-        public CoordMesh(CoordMeshSettings settings)
+        public CoordMesh(CoordMeshSettings settings, Func<int, int, int> ConstrainBoundaryFunc = null)
         {
             this._settings = settings;
+            if (_constrainBoundaryFunc != null)
+                this._constrainBoundaryFunc = DefaultConstrainBoundary;
+
         }
 
         public ICoord FitLonLat(double lon, double lat)
@@ -70,12 +74,12 @@ namespace Quote.CoordMeshMap
 
         public int FitLon(double lon)
         {
-            return FitToCoord(lon, this._settings.LON_MAX, this._settings.LON_MIN, this._settings.RESOLUTION);
+            return FitToCoord(lon, this._settings.LON_MAX, this._settings.LON_MIN, this._settings.RESOLUTION, this._constrainBoundaryFunc);
         }
 
         public int FitLat(double lat)
         {
-            return FitToCoord(lat, this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION);
+            return FitToCoord(lat, this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION, this._constrainBoundaryFunc);
         }
         public int FitLonSide()
         {
@@ -85,17 +89,7 @@ namespace Quote.CoordMeshMap
         {
             return FitSide(this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION);
         }
-
-        private static int FitToCoord(double point, int max, int min, double res)
-        {
-            return BoundaryCheck((int)Math.Floor((point - min) / res), (max - min) + 1);
-        }
-        private static int FitSide(int max, int min, double resolution)
-        {
-            return (int)Math.Floor((max - min) / resolution);
-        }
-
-        protected static int BoundaryCheck(int coord, int length)
+        public static int DefaultConstrainBoundary(int coord, int length)
         {
             if (coord >= length)
                 coord = length - 1;
@@ -104,120 +98,13 @@ namespace Quote.CoordMeshMap
 
             return coord;
         }
-    }
-    public class CoordMeshWithItems<T> : CoordMesh where T : class, IHasId
-    {
-        private readonly IDictionary<int, T>[,] _mesh;
-
-        public CoordMeshWithItems(CoordMeshSettings settings) : base(settings)
+        private static int FitToCoord(double point, int max, int min, double res, Func<int, int, int> ConstrainBoundaryFunc)
         {
-            this._mesh = new IDictionary<int, T>[this.FitLonSide(), this.FitLatSide()];
+            return ConstrainBoundaryFunc((int)Math.Floor((point - min) / res), (max - min) + 1);
         }
-
-        /// <summary>
-        /// Adds item T to coordinate mesh at the specified longitude and latitude. 
-        /// All items at each coordinate have a unique key. Override behavior controlled by 'overrideIfExists' parameter
-        /// </summary>
-        /// <param name="lon">Longitude coordinate to add at</param>
-        /// <param name="lat">Latitude coordinate to add at</param>
-        /// <param name="item">item with id(key) to add</param>
-        /// <param name="overrideIfExists">If true, overrides item if an item with the same key already exists (at coordinate). 
-        /// If false, item is not added and mesh is not changed if an item with the same key already exists (at coordinate). </param>
-        public void Add(double lon, double lat, T item, bool overrideIfExists = false)
+        private static int FitSide(int max, int min, double resolution)
         {
-            Add(FitLonLat(lon, lat), item, overrideIfExists);
+            return (int)Math.Floor((max - min) / resolution);
         }
-
-        public void Add(ICoord coords, T item, bool overrideIfExists = false)
-        {
-            if (overrideIfExists)
-            {
-                //adding an item this way, an existing item will be overridden if it exists. If not, a new item with the key will be added
-                GetItems(coords)[item.Id] = item;
-            }
-            else
-            {
-                try
-                {
-                    //this way ArgumentException will be thrown if the key exists
-                    GetItems(coords).Add(item.Id, item);
-                }
-                catch (ArgumentException)
-                {
-                    //TODO: do nothing or indicate somehow that at duplicate add was attempted
-                }
-            }
-        }
-
-        /// <summary>
-        // Removes item T from coordinate mesh at the specified longitude and latitude. 
-        /// </summary>
-        /// <param name="lon">Longitude coordinate to remove from </param>
-        /// <param name="lat">Latitude coordinate to remove from </param>
-        /// <param name="item">item with id(key) to remove</param>
-        /// <returns>True if the item was successfully removed. False otherwise</returns>
-        public bool Remove(double lon, double lat, T item)
-        {
-            return Remove(FitLonLat(lon, lat), item);
-        }
-
-        public bool Remove(ICoord coords, T item)
-        {
-            if (item == default(T))
-                return false;
-            return this.Remove(coords, item.Id);
-        }
-
-
-        /// <summary>
-        // Removes item with the specified key from coordinate mesh at the specified longitude and latitude. 
-        /// </summary>
-        /// <param name="lon">Longitude coordinate to remove from </param>
-        /// <param name="lat">Latitude coordinate to remove from </param>
-        /// <param name="key">Key of item to remove</param>
-        /// <returns>True if the item was successfully removed. False otherwise</returns>
-        public bool Remove(double lon, double lat, int key)
-        {
-            return Remove(FitLonLat(lon, lat), key);
-        }
-
-        public bool Remove(ICoord coords, int key)
-        {
-            return GetItems(coords).Remove(key);
-        }
-
-        public T GetItem(double lon, double lat, int key)
-        {
-            return GetItem(FitLonLat(lon, lat), key);
-        }
-
-        public T GetItem(ICoord coords, int key)
-        {
-            if (GetItems(coords).TryGetValue(key, out T item))
-                return item;
-            return default(T);
-        }
-        public bool TryGetItem(double lon, double lat, int key, out T item)
-        {
-            return TryGetItem(FitLonLat(lon, lat), key, out item);
-        }
-
-        public bool TryGetItem(ICoord coords, int key, out T item)
-        {
-            return (item = GetItem(coords, key)) != default(T);
-        }
-
-
-        public IDictionary<int, T> GetItems(ICoord coords)
-        {
-            return this._mesh[coords.X, coords.Y] = this._mesh[coords.X, coords.Y] ?? new Dictionary<int, T>();
-        }
-
-        public IDictionary<int, T> GetItems(double lon, double lat)
-        {
-            return GetItems(FitLonLat(lon, lat));
-        }
-
-
     }
 }

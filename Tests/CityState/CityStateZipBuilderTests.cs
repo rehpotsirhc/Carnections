@@ -4,7 +4,7 @@ using GoogleDistance.Models;
 using System;
 using Xunit;
 
-namespace Tests
+namespace CityState.Tests
 {
     public class CityStateZipBuilderTests
     {

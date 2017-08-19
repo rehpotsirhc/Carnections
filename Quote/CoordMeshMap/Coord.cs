@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Quote.CoordMeshMap
 {
-    public interface ICoord
+    public interface ICoord : System.IEquatable<ICoord>
     {
         PosInt X { get; }
         PosInt Y { get; }
     }
 
-    public class Coord : ICoord, System.IEquatable<ICoord>
+    public class Coord : ICoord
     {
         public PosInt X { get; }
         public PosInt Y { get; }

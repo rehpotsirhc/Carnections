@@ -4,7 +4,7 @@ using Common.Models;
 using Common.Interfaces;
 using Common.Enums;
 
-namespace Tests
+namespace GoogleGeocode.Tests
 {
     public class GoogleGeoCodeLookupTests
     {

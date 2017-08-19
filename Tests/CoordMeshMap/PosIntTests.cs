@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Tests.CoordMeshMap
+namespace CoordMeshMap.Tests
 {
     //the exact number is these tests don't really matter, as long as the relations between them remain true
     public class PosIntTests
