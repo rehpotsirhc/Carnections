@@ -9,7 +9,7 @@ namespace CoordMeshMap.Tests
     public class CoordMeshSettingsTests
     {
         [Fact]
-        public void CoordMeshSettigns_AreValid()
+        public void AreValid()
         {
             var settings = new CoordMeshSettings(.8, 1, 10, 5, 6);
             Assert.True(settings.SettingsAreValid());
@@ -22,7 +22,7 @@ namespace CoordMeshMap.Tests
         }
 
         [Fact]
-        public void CoordMeshSettigns_AreNotValid_ThrowsArgumentException()
+        public void AreNotValid_ThrowsArgumentException()
         {
             try
             {
@@ -35,7 +35,7 @@ namespace CoordMeshMap.Tests
         }
 
         [Fact]
-        public void CoordMeshSettigns_AreNotValid_ThrowsArgumentOutOfRangeException()
+        public void AreNotValid_ThrowsArgumentOutOfRangeException()
         {
             try
             {

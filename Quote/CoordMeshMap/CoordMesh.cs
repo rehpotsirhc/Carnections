@@ -53,53 +53,21 @@ namespace Quote.CoordMeshMap
     //    }
     //}
 
-    public class BoundaryHandler
-    {
-        public PosInt Coord { get; }
-        public PosInt BoundaryLength { get; }
-        public bool Ok { get; }
-
-        public BoundaryHandler(int coord, int length)
-        {
-            try
-            {
-                Coord = new PosInt(coord);
-                BoundaryLength = new PosInt(length);
-                this.Ok = true;
-            }
-            catch (ArgumentOutOfRangeException e)
-            {
-                //TODO: log?
-                this.Coord = -1;
-                this.BoundaryLength = -1;
-                this.Ok = false;
-            }
-        }
-
-        public static BoundaryHandler DefaultHandleBoundary(int coord, int length)
-        {
-            if (coord >= length)
-                coord = length - 1;
-            else if (coord < 0)
-                coord = 0;
-
-            return new BoundaryHandler(coord, length);
-        }
-    }
+    
 
     public class CoordMesh
     {
 
         protected readonly CoordMeshSettings _settings;
-        private Func<int, int, BoundaryHandler> _handleBoundaryFunc;
+        private BoundaryHandler.BoundaryHandleFunc _handleBoundaryFunc;
 
-        public CoordMesh(CoordMeshSettings settings, Func<int, int, BoundaryHandler> handleBoundaryFunc = null)
+        public CoordMesh(CoordMeshSettings settings, BoundaryHandler.BoundaryHandleFunc handleBoundaryFunc = null)
         {
             this._settings = settings;
             if (handleBoundaryFunc != null)
                 this._handleBoundaryFunc = handleBoundaryFunc;
             else
-                this._handleBoundaryFunc = BoundaryHandler.DefaultHandleBoundary;
+                this._handleBoundaryFunc = BoundaryHandler.HandleBoundary_ConstrainOutOfBounds;
         }
 
         public ICoord FitLonLat(PosNumber lon, PosNumber lat)
@@ -123,21 +91,25 @@ namespace Quote.CoordMeshMap
         {
             return FitToCoord(lat, this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION, this._handleBoundaryFunc);
         }
-        public int FitLonSide()
+        public PosInt FitLonSide()
         {
             return FitSide(this._settings.LON_MAX, this._settings.LON_MIN, this._settings.RESOLUTION);
         }
-        public int FitLatSide()
+        public PosInt FitLatSide()
         {
             return FitSide(this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION);
         }
-        private static BoundaryHandler FitToCoord(PosNumber point, PosInt max, PosInt min, PosNumber res, Func<int, int, BoundaryHandler> handleBoundaryFunc)
+        private static BoundaryHandler FitToCoord(PosNumber point, PosInt max, PosInt min, PosNumber res, BoundaryHandler.BoundaryHandleFunc handleBoundaryFunc)
         {
-            return handleBoundaryFunc((int)Math.Floor((point.AsDouble - min.AsInt) / res), (max - min) + 1);
+            return handleBoundaryFunc((int)Math.Floor((point.AsDouble - min.AsInt) / res), CalculateLength(max, min));
         }
-        private static int FitSide(PosInt max, PosInt min, PosNumber resolution)
+        private static PosInt FitSide(PosInt max, PosInt min, PosNumber resolution)
         {
-            return (int)Math.Floor((max - min) / resolution);
+            return (int)Math.Floor(CalculateLength(max, min).AsInt / resolution);
+        }
+        private static PosInt CalculateLength(PosInt max, PosInt min)
+        {
+            return new PosInt((max - min) + 1, zeroAllowed: false);
         }
     }
 }

@@ -11,11 +11,24 @@ namespace CoordMeshMap.Tests
     {
 
         [Fact]
-        public void Constructor_IsNegative_ThrowsArgumentOutOfRangeException()
+        public void IsNegative_ThrowsArgumentOutOfRangeException()
         {
             try
             {
                 var PosInt = new PosInt(-68);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                Assert.True(true);
+            }
+        }
+
+        [Fact]
+        public void IsZero_ZeroNotAllowed_ThrowsArgumentOutOfRangeException()
+        {
+            try
+            {
+                var PosInt = new PosInt(0, false);
             }
             catch (ArgumentOutOfRangeException)
             {

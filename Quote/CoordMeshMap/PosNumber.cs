@@ -7,9 +7,9 @@ namespace Quote.CoordMeshMap
     public class PosNumber
     {
         public double AsDouble { get; }
-        public PosNumber(double theNumber)
+        public PosNumber(double theNumber, bool zeroAllowed = true)
         {
-            if (theNumber < 0)
+            if ((theNumber < 0 && zeroAllowed) || (theNumber <= 0 && !zeroAllowed))
                 throw new ArgumentOutOfRangeException("theNumber", theNumber, "Can't create a positive number object with a negative number");
 
             this.AsDouble = theNumber;
@@ -62,7 +62,7 @@ namespace Quote.CoordMeshMap
     public class PosInt : PosNumber
     {
         public int AsInt { get { return (int)AsDouble; } }
-        public PosInt(int theNumber) : base(theNumber) { }
+        public PosInt(int theNumber, bool zeroAllowed = true) : base(theNumber, zeroAllowed) { }
 
         public static implicit operator int(PosInt theNumber)
         {

@@ -9,7 +9,7 @@ namespace CoordMeshMap.Tests
     public class CoordTests
     {
         [Fact]
-        public void Coords__IsNegative_ThrowsArgumentOutOfRangeException()
+        public void IsNegative_ThrowsArgumentOutOfRangeException()
         {
             try
             {
@@ -23,7 +23,7 @@ namespace CoordMeshMap.Tests
         }
 
         [Fact]
-        public void Coords_AreEqual()
+        public void AreEqual()
         {
             ICoord coord1 = new Coord(1, 1);
             ICoord coord2 = new Coord(1, 1);
@@ -38,7 +38,7 @@ namespace CoordMeshMap.Tests
         }
 
         [Fact]
-        public void Coords_AreNotEqual()
+        public void AreNotEqual()
         {
             ICoord coord1 = new Coord(1, 2);
             ICoord coord2 = new Coord(1, 1);
