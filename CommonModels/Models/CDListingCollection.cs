@@ -7,6 +7,6 @@ namespace Common.Models
     {
         public int Count { get; set; }
         public int PageStart { get; set; }
-        public IList<ICDListing> Listings { get; set; }
+        public List<CDListing> Listings { get; set; }
     }
 }

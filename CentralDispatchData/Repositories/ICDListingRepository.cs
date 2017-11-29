@@ -1,12 +1,14 @@
 ﻿using Common.Interfaces;
+using Common.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CentralDispatchData.Repositories
 {
     public interface ICDListingRepository
     {
-        void DeleteOld(int daysOld, int commitCount, bool recreateContext);
-        void AddorUpdate(IEnumerable<ITransformedListing> listings, int commitCount, bool recreateContext);
-        IEnumerable<ITransformedListing> GetAll();
+        int DeleteOld(int daysOld, int commitCount, bool disposeContextWhenDone = true);
+        int AddorUpdate(IEnumerable<TransformedListing> listings, int commitCount, bool disposeContextWhenDone = true);
+        IEnumerable<TransformedListing> GetAll();
     }
 }

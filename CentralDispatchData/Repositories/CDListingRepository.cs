@@ -1,4 +1,6 @@
 ﻿using Common.Interfaces;
+using Common.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,97 +12,96 @@ namespace CentralDispatchData.Repositories
     {
         private const int DEFAULT_COMMIT_COUNT = -1;
         private const bool DEFAULT_RECREATE_CONTEXT = false;
-
-        CDListingDbContext _dbContext;
-
+        private CDListingDbContext _dbContext;
+        private static int numberUpdated = 0;
+        private static int numberAdded = 0;
         public CDListingRepository(CDListingDbContext dbContext)
         {
             _dbContext = dbContext;
+            _dbContext.CDListings = _dbContext.Set<TransformedListing>();
         }
 
-        public void DeleteOld(int daysOld, int commitCount = DEFAULT_COMMIT_COUNT, bool recreateContext = DEFAULT_RECREATE_CONTEXT)
+
+        public int DeleteOld(int daysOld, int commitCount = DEFAULT_COMMIT_COUNT, bool disposeContextWhenDone = true)
         {
-            if (_dbContext == null || recreateContext)
-                _dbContext = new CDListingDbContext();
+            IQueryable<TransformedListing> listings = _dbContext.CDListings.Where(listing => listing.ModifiedDate < DateTime.Now.AddDays(-daysOld));
 
-            var dbSet = _dbContext.Set<IHasListingIdAndChangeDates>();
-            IQueryable<IHasListingIdAndChangeDates> listings = dbSet.Where(listing => listing.ModifiedDate < DateTime.Now.AddDays(-daysOld));
-
-            BulkDatbaseOperation(listings, commitCount, recreateContext, DeleteToContext);
+            return BulkDatbaseOperation(listings, commitCount, DeleteToContext);
         }
 
-        public void AddorUpdate(IEnumerable<ITransformedListing> listings, int commitCount = DEFAULT_COMMIT_COUNT, bool recreateContext = DEFAULT_RECREATE_CONTEXT)
+        public int AddorUpdate(IEnumerable<TransformedListing> listings, int commitCount = DEFAULT_COMMIT_COUNT, bool disposeContextWhenDone = true)
         {
+            Console.WriteLine("In add or update");
             //listings must be the full ICDListing and not ICDListingMinimal
-            BulkDatbaseOperation(listings, commitCount, recreateContext, AddorUpdateToContext);
+            return BulkDatbaseOperation(listings, commitCount, AddorUpdateToContext);
         }
-        public IEnumerable<ITransformedListing> GetAll()
+        public IEnumerable<TransformedListing> GetAll()
         {
-            if (_dbContext == null)
-                _dbContext = new CDListingDbContext();
-
-            return _dbContext.Set<ITransformedListing>();
+            return _dbContext.CDListings;
         }
 
-        private async void BulkDatbaseOperation(IEnumerable<IHasListingIdAndChangeDates> listings, int commitCount, bool recreateContext,
-            Action<IHasListingIdAndChangeDates, CDListingDbContext> dataBaseOperation)
+        private int BulkDatbaseOperation(IEnumerable<TransformedListing> listings, int commitCount,
+            Action<TransformedListing, CDListingDbContext> dataBaseOperation, bool disposeContextWhenDone = true)
         {
             if (commitCount == DEFAULT_COMMIT_COUNT)
                 commitCount = listings.Count();
 
             try
             {
-                if (_dbContext == null || recreateContext)
-                    _dbContext = new CDListingDbContext();
-
                 int count = 0;
-                foreach (var listing in listings)
+                if (listings != null & listings.Count() > 0)
                 {
+                    foreach (var listing in listings)
+                    {
 
-                    dataBaseOperation(listing, _dbContext);
-                    _dbContext = await SaveAndFlush(_dbContext, ++count, commitCount, recreateContext);
+                        dataBaseOperation(listing, _dbContext);
+
+                        if (++count % commitCount == 0)
+                            _dbContext.SaveChanges();
+                    }
                 }
-
-                await _dbContext.SaveChangesAsync();
+                _dbContext.SaveChanges();
+                Console.WriteLine($"Listings processed: {count}");
+                return count;
+            }
+            catch (Exception e)
+            {
+                //log exception
+                Console.WriteLine(e);
+                return -1;
             }
             finally
             {
-                if (_dbContext != null)
-                    _dbContext.Dispose();
-            }
-
-        }
-
-        private static async void AddorUpdateToContext(IHasListingIdAndChangeDates listing, CDListingDbContext context)
-        {
-            listing.ModifiedDate = DateTime.UtcNow;
-            var dbSetForFind = context.Set<IHasListingIdAndChangeDates>();
-            var foundListing = await dbSetForFind.FindAsync(listing.ListingId);
-
-            var dbSetFull = context.Set<ITransformedListing>();
-
-            if (foundListing == null || foundListing.ListingId < 0)
-                dbSetFull.Add((ITransformedListing)listing);
-            else dbSetFull.Update((ITransformedListing)listing);
-        }
-        private static void DeleteToContext(IHasListingIdAndChangeDates listing, CDListingDbContext context)
-        {
-            var dbSet = context.Set<IHasListingIdAndChangeDates>();
-            dbSet.Remove(listing);
-        }
-
-        private static async Task<CDListingDbContext> SaveAndFlush(CDListingDbContext context, int count, int commitCount, bool recreateContext)
-        {
-            if (count % commitCount == 0)
-            {
-                await context.SaveChangesAsync();
-                if (recreateContext)
+                if (disposeContextWhenDone)
                 {
-                    context.Dispose();
-                    context = new CDListingDbContext();
+                    _dbContext.Dispose();
+                    Console.WriteLine("Context disposed");
+                    Console.WriteLine("");
                 }
             }
-            return context;
+        }
+
+        private static void AddorUpdateToContext(TransformedListing listing, CDListingDbContext context)
+        {
+            listing.ModifiedDate = DateTime.UtcNow;
+            var foundListing = context.CDListings.Find(listing.ListingId);
+
+            if (foundListing == null || foundListing.ListingId < 0)
+            {
+                Console.WriteLine("Listing added");
+                context.CDListings.Add(listing);
+             //   Console.WriteLine($"Number Added: {++numberAdded}");
+            }
+            else
+            {
+                context.CDListings.Update(listing);
+              Console.WriteLine($"Number Updated: {++numberUpdated}");
+            }
+        }
+
+        private static void DeleteToContext(TransformedListing listing, CDListingDbContext context)
+        {
+            context.CDListings.Remove(listing);
         }
     }
 }

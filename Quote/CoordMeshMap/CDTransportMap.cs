@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Caching.Memory;
 using System.Threading.Tasks;
 using System;
+using Common.Models;
 
 namespace Quote.CoordMeshMap
 {

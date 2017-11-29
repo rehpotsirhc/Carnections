@@ -7,8 +7,8 @@ namespace Common.Models
     public class CDListing : ICDListing
     {
         public int ListingId { get; set; }
-        public ILonLat Pickup { get; set; }
-        public ILonLat Delivery { get; set; }
+        public LonLat Pickup { get; set; }
+        public LonLat Delivery { get; set; }
         public double Price { get; set; }
         public double PricePerMile { get; set; }
         public bool VehicleOperable { get; set; }

@@ -18,7 +18,7 @@ namespace Common.Utils
             };
         }
 
-        public static IVehicleSizeWeight Build(EVehicleSize size)
+        public static VehicleSizeWeight Build(EVehicleSize size)
         {
             double weight = 1;
             if (size == EVehicleSize.Small)
@@ -33,9 +33,9 @@ namespace Common.Utils
             };
         }
 
-        public static IVehicleTypeSize Build(EVehicleType type)
+        public static VehicleTypeSize Build(EVehicleType type)
         {
-            IVehicleSizeWeight sizeWeight;
+            VehicleSizeWeight sizeWeight;
             if (type== EVehicleType.Car || type == EVehicleType.Motorcycle || type == EVehicleType.ATV)
                 sizeWeight = Build(EVehicleSize.Small);
             else

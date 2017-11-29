@@ -1,27 +1,24 @@
 ﻿using Common.Interfaces;
+using Common.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+
 namespace CentralDispatchData
 {
     public class CDListingDbContext :  DbContext
     {
-        public CDListingDbContext()
+        public CDListingDbContext(DbContextOptions options):base(options)
         {
-        }
-       // public DbSet<ICDListing> CDListings { get; set; }
 
+        }
+        public DbSet<TransformedListing> CDListings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
-            modelBuilder.Entity<ITransformedListing>().ToTable("TransformedListing");
-            modelBuilder.Entity<ITransformedListing>().HasKey(d => d.ListingId);
-            modelBuilder.Entity<ITransformedListing>().Property(d => d.CreatedDate).ValueGeneratedOnAdd();
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-
+            modelBuilder.Entity<TransformedListing>().ToTable("TransformedListing");
+            modelBuilder.Entity<TransformedListing>().HasKey(d => d.ListingId);
+            modelBuilder.Entity<TransformedListing>().Property(d => d.CreatedDate).ValueGeneratedOnAdd();
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

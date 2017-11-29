@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Common.Models;
+using System.Collections.Generic;
 
 namespace Common.Interfaces
 {
@@ -6,6 +7,6 @@ namespace Common.Interfaces
     {
         int Count { get; }
         int PageStart { get; }
-        IList<ICDListing> Listings { get; }
+        List<CDListing> Listings { get; }
     }
 }

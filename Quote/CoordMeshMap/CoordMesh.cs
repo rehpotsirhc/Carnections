@@ -53,7 +53,7 @@ namespace Quote.CoordMeshMap
     //    }
     //}
 
-    
+
 
     public class CoordMesh
     {
@@ -99,17 +99,21 @@ namespace Quote.CoordMeshMap
         {
             return FitSide(this._settings.LAT_MAX, this._settings.LAT_MIN, this._settings.RESOLUTION);
         }
-        private static BoundaryHandler FitToCoord(PosNumber point, PosInt max, PosInt min, PosNumber res, BoundaryHandler.BoundaryHandleFunc handleBoundaryFunc)
+        private static BoundaryHandler FitToCoord(PosNumber point, PosInt max, PosInt min, PosNumber resolution, BoundaryHandler.BoundaryHandleFunc handleBoundaryFunc)
         {
-            return handleBoundaryFunc((int)Math.Floor((point.AsDouble - min.AsInt) / res), CalculateLength(max, min));
+            return handleBoundaryFunc((int)Math.Floor((point.AsDouble - min.AsInt) / resolution), CalculateLength(max, min, resolution));
         }
         private static PosInt FitSide(PosInt max, PosInt min, PosNumber resolution)
         {
-            return (int)Math.Floor(CalculateLength(max, min).AsInt / resolution);
+            return CalculateLength(max, min, resolution);
         }
-        private static PosInt CalculateLength(PosInt max, PosInt min)
+        private static PosInt CalculateSide(PosInt max, PosInt min)
         {
-            return new PosInt((max - min) + 1, zeroAllowed: false);
+            return new PosInt((int)Math.Ceiling(max.AsDouble - min.AsDouble), zeroAllowed: false);
+        }
+        private static PosInt CalculateLength(PosInt max, PosInt min, PosNumber resolution)
+        {
+            return new PosInt((int)Math.Ceiling(CalculateSide(max, min).AsInt * resolution.AsDouble), zeroAllowed: false);
         }
     }
 }

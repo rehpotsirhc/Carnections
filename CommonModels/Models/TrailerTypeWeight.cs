@@ -3,8 +3,9 @@ using Enums.Models;
 
 namespace Common.Models
 {
-    public class TrailerTypeWeight : ITrailerTypeWeight
+    public class TrailerTypeWeight : ITrailerTypeWeight, IHasId
     {
+        public int Id { get; set; }
         public ETrailerType Type { get; set; }
         public double Weight { get; set; }
         public TrailerTypeWeight(ETrailerType type)

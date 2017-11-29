@@ -28,7 +28,7 @@ namespace Common.Utils
                             client.DefaultRequestHeaders.Add(header.Key, header.Value);
                         }
                     }
-                    HttpResponseMessage response = client.GetAsync(endpoint).Result;
+                    HttpResponseMessage response = await client.GetAsync(endpoint);
                     if (response.IsSuccessStatusCode) return await response.Content.ReadAsStringAsync();
                     else return null;
                 }

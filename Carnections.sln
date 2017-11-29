@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Carnections", "Carnections\Carnections.csproj", "{39C2CD0F-C95D-4988-8A73-68A6981634AA}"
 EndProject
@@ -17,9 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "CommonModels\Comm
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{76246EA0-B783-450D-8060-D882576C544B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleData", "VehicleData\VehicleData.csproj", "{C2D6C573-3336-449E-B6CA-7C33C6010D57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VehicleData", "VehicleData\VehicleData.csproj", "{C2D6C573-3336-449E-B6CA-7C33C6010D57}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuoteData", "QuoteData\QuoteData.csproj", "{DFBC3F30-BBA6-4350-B767-385E8010C6A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuoteData", "QuoteData\QuoteData.csproj", "{DFBC3F30-BBA6-4350-B767-385E8010C6A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScrapeCDRunnerAndDbMigrator", "ScrapeCDRunnerAndDbMigrator\ScrapeCDRunnerAndDbMigrator.csproj", "{11BC5C64-BC90-4E13-981E-01FE3CEF887D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,8 +65,15 @@ Global
 		{DFBC3F30-BBA6-4350-B767-385E8010C6A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFBC3F30-BBA6-4350-B767-385E8010C6A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFBC3F30-BBA6-4350-B767-385E8010C6A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11BC5C64-BC90-4E13-981E-01FE3CEF887D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11BC5C64-BC90-4E13-981E-01FE3CEF887D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11BC5C64-BC90-4E13-981E-01FE3CEF887D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11BC5C64-BC90-4E13-981E-01FE3CEF887D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A1CFD7C-9357-4660-9415-A8785C2D6114}
 	EndGlobalSection
 EndGlobal

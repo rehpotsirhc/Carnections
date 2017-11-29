@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Quote.CoordMeshMap;
 using Quote;
 using System.Threading.Tasks;
+using Common.Models;
 
 namespace Carnections.Controllers
 {

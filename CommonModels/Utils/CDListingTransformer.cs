@@ -9,9 +9,9 @@ namespace Common.Utils
 {
     public static class CDListingTransformer
     {
-        public static ITransformedListing Transform(ICDListing originalListing)
+        public static TransformedListing Transform(ICDListing originalListing)
         {
-            ParseVehicles(originalListing, out IList<IVehicleTypeSize> vehicleTypesSizes, out double averageVehicleWeight, out int vehicleCount);
+            ParseVehicles(originalListing, out List<VehicleTypeSize> vehicleTypesSizes, out double averageVehicleWeight, out int vehicleCount);
             return new TransformedListing()
             {
                 Delivery = originalListing.Delivery,
@@ -32,9 +32,9 @@ namespace Common.Utils
             };
         }
 
-        private static void ParseVehicles(ICDListing originalListing, out IList<IVehicleTypeSize> vehicleTypeSizes, out double averageVehicleWeight, out int vehicleCount)
+        private static void ParseVehicles(ICDListing originalListing, out List<VehicleTypeSize> vehicleTypeSizes, out double averageVehicleWeight, out int vehicleCount)
         {
-            vehicleTypeSizes = new List<IVehicleTypeSize>();
+            vehicleTypeSizes = new List<VehicleTypeSize>();
             averageVehicleWeight = 0;
             vehicleCount = 0;
             string[] vehicleStringWithQtyParts = originalListing.VehicleTypes.Replace("(", "").Replace(")", "").Trim().Split(',');

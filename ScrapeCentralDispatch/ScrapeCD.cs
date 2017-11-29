@@ -10,109 +10,159 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using CentralDispatchData;
+using Common.Models;
+using System.Threading;
 
 namespace ScrapeCentralDispatch
 {
     //Perhaps this method should not be static and instead be an instance class with a backing interface
     public static class ScrapeCD
     {
-        private const double MIN_PER_MILE = .1;
-        private const int SCRAPE_BATCH_SIZE = 500;
-        private const int DATABASE_BATCH_SIZE = 100;
-        private const int INITIAL_TOTAL = SCRAPE_BATCH_SIZE + 1;
+
 
 
         // code from
         // https://blogs.msdn.microsoft.com/pfxteam/2012/08/02/processing-tasks-as-they-complete/
-        public static void ScrapeAllAndSave(ICDListingRepository repository,
-            Action<ICDListingRepository, Func<IList<Task<ICDListingCollection>>>, Action<ICDListingRepository, ICDListingCollection>, Action<Exception>> scrapeAllAndSaveConcurrently = null,
-            Func<IList<Task<ICDListingCollection>>> scrape = null,
-            Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
+        //public static void ScrapeAllAndSave(
+        //    Action<Func<IAsyncEnumerable<Task<string>>>, Action<string>, Action<Exception>> scrapeAllAndSaveConcurrently = null,
+        //    Func<IAsyncEnumerable<Task<string>>> scrape = null,
+        //    Action<string> onBatchScrapeCompleted = null, Action<Exception> onBatchScrapeError = null)
+        //{
+        //    //need to try/test Method1 and Method2
+        //    scrapeAllAndSaveConcurrently = scrapeAllAndSaveConcurrently ?? RunTasksConcurrently_Method1;
+        //    scrape = scrape ?? ScrapeAll;
+        //    onBatchScrapeCompleted = onBatchScrapeCompleted ?? OnBatchScrapeCompleted;
+        //    onBatchScrapeError = onBatchScrapeError ?? OnBatchScrapeError;
+
+        //    scrapeAllAndSaveConcurrently(scrape, onBatchScrapeCompleted, onBatchScrapeError);
+
+
+        //}
+
+        private static void RunTasksConcurrently_Method1(Func<IAsyncEnumerable<Task<string>>> scrape,
+            Action<string> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
         {
-            //need to try/test Method1 and Method2
-            scrapeAllAndSaveConcurrently = scrapeAllAndSaveConcurrently ?? RunTasksConcurrently_Method2;
-            scrape = scrape ?? ScrapeAll;
-            onBatchScrapeCompleted = onBatchScrapeCompleted ?? OnBatchScrapeCompleted;
-            onBatchScrapeError = onBatchScrapeError ?? OnBatchScrapeError;
 
-            scrapeAllAndSaveConcurrently(repository, scrape, onBatchScrapeCompleted, onBatchScrapeError);
+            scrape().ForEach(batch =>
+             batch.ContinueWith(completed =>
+             {
+                 switch (completed.Status)
+                 {
+                     case TaskStatus.RanToCompletion: onBatchScrapeCompleted(completed.Result); break;
+                     case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
 
+                 }
+             }, TaskContinuationOptions.RunContinuationsAsynchronously)
 
+            );
+
+            //foreach (Task<ICDListingCollection> listingBatchTask in scrape().ToAsyncEnumerable())
+            //{
+
+            //}
         }
 
-        private static void RunTasksConcurrently_Method1(ICDListingRepository repository, Func<IList<Task<ICDListingCollection>>> scrape,
-            Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
-        {
-            foreach (Task<ICDListingCollection> listingBatchTask in scrape())
-            {
-                listingBatchTask.ContinueWith(completed =>
-                {
-                    switch (completed.Status)
-                    {
-                        case TaskStatus.RanToCompletion: onBatchScrapeCompleted(repository, completed.Result); break;
-                        case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
+        //private static async void RunTasksConcurrently_Method2(ICDListingRepository<TransformedListing> repository, Func<IEnumerable<Task<ICDListingCollection>>> scrape,
+        //Action<ICDListingRepository<TransformedListing>, ICDListingCollection> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        //{
+        //    IEnumerable<Task<ICDListingCollection>> tasks = scrape();
+        //    while (tasks.Count > 0)
+        //    {
+        //        var t = await Task.WhenAny(tasks);
+        //        tasks.Remove(t);
+        //        try { onBatchScrapeCompleted(repository, await t); }
+        //        catch (OperationCanceledException) { }
+        //        catch (Exception e) { onBatchScrapeError(e); }
+        //    }
+        //}
 
-                    }
-                }, TaskScheduler.Default);
-            }
-        }
-
-        private static async void RunTasksConcurrently_Method2(ICDListingRepository repository, Func<IList<Task<ICDListingCollection>>> scrape,
-        Action<ICDListingRepository, ICDListingCollection> onBatchScrapeCompleted, Action<Exception> onBatchScrapeError)
+        private static void OnBatchScrapeCompleted(string listingsBatch)
         {
-            IList<Task<ICDListingCollection>> tasks = scrape();
-            while (tasks.Count > 0)
-            {
-                var t = await Task.WhenAny(tasks);
-                tasks.Remove(t);
-                try { onBatchScrapeCompleted(repository, await t); }
-                catch (OperationCanceledException) { }
-                catch (Exception e) { onBatchScrapeError(e); }
-            }
-        }
-
-        private static void OnBatchScrapeCompleted(ICDListingRepository repository, ICDListingCollection listingsBatch)
-        {
-            repository.AddorUpdate(listingsBatch.Listings.Select(l => CDListingTransformer.Transform(l)), DATABASE_BATCH_SIZE, true);
+            //Utilizes .NET dependency injection to recreate the repository and context for each batch
+            DbServicesCollection.Repository.AddorUpdate(JsonConvert.DeserializeObject<CDListingCollection>(listingsBatch).Listings.Select(l => CDListingTransformer.Transform(l)), Environment.DATABASE_BATCH_SIZE);
         }
         private static void OnBatchScrapeError(Exception e)
         {
-            //TODO: handle error
+            Console.WriteLine("Batch Scrape Exception: ");
+            Console.WriteLine(e);
         }
 
 
-        private static IList<Task<ICDListingCollection>> ScrapeAll()
+        public static async Task ScrapeAll()
         {
-            int i = 0;
-            var firstBatch = ScrapeCD.BuildEndpointAll(MIN_PER_MILE, i, SCRAPE_BATCH_SIZE).GetListings().Result;
-            int absoluteTotal = firstBatch.Count;
+            //wait for the first batch to complete so we know how many records exist, so we know when to stop
+            //var firstBatch = ScrapeCD.BuildEndpointAll(Environment.MIN_PER_MILE, i, Environment.SCRAPE_BATCH_SIZE).GetListings().Result;
+            //int absoluteTotal = 30000;
+            //Console.WriteLine($"Total number of records: {absoluteTotal}");
+            //  yield return firstBatch;
 
-            IList<Task<ICDListingCollection>> scrapeBatches = new List<Task<ICDListingCollection>>() { Task.FromResult(firstBatch) };
-
-
-            for (i = 1; i < absoluteTotal; i += ScrapeCD.SCRAPE_BATCH_SIZE)
+            var tasks = new List<Task<string>>();
+            for (int i = 0; i < 150; i += Environment.SCRAPE_BATCH_SIZE)
             {
-                scrapeBatches.Add(ScrapeCD.BuildEndpointAll(MIN_PER_MILE, i, SCRAPE_BATCH_SIZE).GetListings());
+                Thread.Sleep(1000);
+                tasks.Add(ScrapeCD.BuildEndpointAll(Environment.MIN_PER_MILE, i, Environment.SCRAPE_BATCH_SIZE).GetListings());
+
+
+
+                Console.WriteLine(i);
+
             }
 
+            var dbTasks= new List<Task>();
+            tasks.ForEach(batch =>
+             dbTasks.Add(batch.ContinueWith(completed =>
+              {
+                  switch (completed.Status)
+                  {
+                      case TaskStatus.RanToCompletion:
+                          {
+                              ICDListingCollection listings;
+                              try
+                              {
 
-            return scrapeBatches;
+                                  // return JsonConvert.DeserializeObject<CentralDispatchListings>(response, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+                                  listings = JsonConvert.DeserializeObject<CDListingCollection>(completed.Result);
+                                  Console.WriteLine("listings deserialized");
+                              }
+                              catch (Exception)
+                              {
+                                  listings = null;
+                                  Console.WriteLine("listings null");
+                              }
+                              if(listings != null)
+                                DbServicesCollection.Repository.AddorUpdate(listings.Listings.Select(l => CDListingTransformer.Transform(l)), Environment.DATABASE_BATCH_SIZE); break;
+                          }
+                          //  case TaskStatus.Faulted: onBatchScrapeError(completed.Exception.InnerException); break;
+
+                  }
+              }, TaskContinuationOptions.RunContinuationsAsynchronously)));
+
+           await Task.WhenAll(dbTasks);
+
+
+
+            // yield break return batches.ToAsyncEnumerable();
         }
 
-        private static async Task<ICDListingCollection> GetListings(this string endpoint)
+        public static async Task<string> GetListings(this string endpoint)
         {
-            string response = await HttpGet.Get(endpoint, "Cookie", BuildCookieHeader());
-            if (response == null)
-                return null;
-            try
-            {
-                // return JsonConvert.DeserializeObject<CentralDispatchListings>(response, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
-                return JsonConvert.DeserializeObject<ICDListingCollection>(response);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return await HttpGet.Get(endpoint, "Cookie", BuildCookieHeader());
+
+            //await Task.Delay(5000);
+
+            //if (response == null)
+            //    return null;
+            //try
+            //{
+
+            //    // return JsonConvert.DeserializeObject<CentralDispatchListings>(response, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+            //    return JsonConvert.DeserializeObject<CDListingCollection>(response);
+            //}
+            //catch (Exception)
+            //{
+            //    return null;
+            //}
         }
 
 
@@ -150,7 +200,7 @@ namespace ScrapeCentralDispatch
             return sb.ToString();
         }
 
-        private static string BuildEndpointAll(double minPerMile, int pageStart, int listingsPerPage)
+        public static string BuildEndpointAll(double minPerMile, int pageStart, int listingsPerPage)
         {
             var sb = new StringBuilder();
             sb.Append("https://www.centraldispatch.com/protected/listing-search/get-results-ajax?").Append("&");
@@ -206,8 +256,8 @@ namespace ScrapeCentralDispatch
             sb.AppendFormat("{0}={1}", "_gid", "GA1.2.1877014367.1495558286").Append(sep);
             //sb.AppendFormat("{0}={1}", "test-persistent", "1").Append(sep);
             //sb.AppendFormat("{0}={1}", "test-session", "1").Append(sep); //again, twice
-            sb.AppendFormat("{0}={1}", "PHPSESSID", "90de1b4bdc671d655474aebf413a632a");
-
+            // sb.AppendFormat("{0}={1}", "PHPSESSID", "90de1b4bdc671d655474aebf413a632a"); //I think I locked this one out. We probably need a thread.sleep in between requests to prevent this
+            sb.AppendFormat("{0}={1}", "PHPSESSID", "c1350653c8049b8096127a45466a9f60");
             return sb.ToString();
         }
     }

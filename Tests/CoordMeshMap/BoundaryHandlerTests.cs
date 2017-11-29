@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Tests.CoordMeshMap
+namespace CoordMeshMap.Tests
 {
     public class BoundaryHandlerTests
     {

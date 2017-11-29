@@ -1,11 +1,12 @@
-﻿using Enums.Models;
+﻿using Common.Models;
+using Enums.Models;
 
 namespace Common.Interfaces
 {
     public interface ICDListing : IHasListingId
     {
-        ILonLat Pickup { get; }
-        ILonLat Delivery { get; }
+        LonLat Pickup { get; }
+        LonLat Delivery { get; }
         double Price { get; }
         double PricePerMile { get; }
         bool VehicleOperable { get; }
