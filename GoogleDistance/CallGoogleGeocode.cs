@@ -18,7 +18,7 @@ namespace GoogleDistance
             if(string.IsNullOrWhiteSpace(endpoint))
                 return null;
 
-            string response = await HttpGet.Get(endpoint);
+            string response = await HttpUtils.GetAsString(endpoint);
             if (response == null)
                 return null;
             try
